@@ -1,0 +1,929 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using TMPro;  // This is necessary for using TMP_InputField
+
+public enum Direction
+{
+  Left,
+  UpLeft,
+  UpFacingLeft,
+  UpFacingRight,
+  UpRight,
+  Right,
+  RightDown,
+  DownFacingLeft,
+  DownFacingRight,
+  DownLeft,
+  Nothing,
+}
+
+// Define the enum outside of your class
+public enum ContactQuadrant
+{
+  TopRight,   // 0
+  TopLeft,    // 1
+  BottomLeft, // 2
+  BottomRight, // 3
+  None
+}
+ 
+public class CharacterMovement : MonoBehaviour
+{ 
+  CharacterAnimation characterAnimation;
+  CharacterCustomization characterCustomization;
+  public int movementSpeed = 65;
+  [HideInInspector] public int initialmovementSpeed = 65;
+  [HideInInspector] public Rigidbody2D rb; 
+
+  [HideInInspector] public BoxCollider2D boxCollider;
+
+ public string motionDirection = "normal";
+  [HideInInspector] public Vector3 change;
+  [HideInInspector] public Vector3 initialPosition;
+
+  [HideInInspector] public bool characterOnThresh = false;
+  [HideInInspector] public bool playerOnBuildingThresh = false;
+  [HideInInspector] public bool movementAutopilot = false;
+  [HideInInspector] public bool isJoyStick = false;
+
+
+
+  [HideInInspector] public bool fixedDirectionLeftDiagonal;
+  [HideInInspector] public bool fixedDirectionRightDiagonal;
+
+  public bool playerIsOutside = false;
+
+  [HideInInspector] public bool facingLeft;
+  [HideInInspector] public bool facingUp;
+
+  [HideInInspector] public bool characterOnBike = false;
+  public bool playerOnWheelchair = false;
+
+  [HideInInspector] public bool spaceBarDeactivated;
+
+  [HideInInspector] public Coroutine allowTimeForSpaceBarCoro;
+  [HideInInspector] public Coroutine npcRandomMovementCoro;
+
+
+  [HideInInspector] public bool playerIsCustomizing = false;
+  [HideInInspector] public bool playerOnFurniture = false;
+  [HideInInspector] public bool playerTouchingCollider = false;
+
+
+  [HideInInspector] public TMP_InputField[] inputFields;
+
+
+  // Variable to store the contact quadrant
+  [HideInInspector] public ContactQuadrant currentContactQuadrant;
+
+  // Map the angle to control directions
+  public Direction controlDirection = Direction.Nothing; // Default value should never be used
+
+
+  public PlatformTrackTrainScript currentPlatformOrTrain = null;
+  public AreaType currentArea = AreaType.platform;
+
+  public PlatformTrackTrainScript previousPlatformOrTrain = null;
+  public AreaType previousArea = AreaType.platform;
+  public ThresholdScript currentThreshold = null;
+
+  void SetLayerRecursively(GameObject obj, int newLayer)
+  {
+      obj.layer = newLayer;
+
+      foreach (Transform child in obj.transform)
+      {
+          SetLayerRecursively(child.gameObject, newLayer);
+      }
+  }
+
+  void Awake()    
+    {
+      rb = GetComponent<Rigidbody2D>();
+      boxCollider = GetComponentInChildren<BoxCollider2D>();
+      // Find all input fields in the scene
+      inputFields = FindObjectsOfType<TMP_InputField>();
+
+      characterAnimation = GetComponent<CharacterAnimation>();
+      characterCustomization = GetComponent<CharacterCustomization>();
+
+      initialPosition = GetComponent<Transform>().position;
+      movementSpeed = 65;
+      initialmovementSpeed = movementSpeed;
+      
+      // if (CompareTag("Player"))
+      // {
+          // rb.bodyType = RigidbodyType2D.Dynamic;
+
+          // SetLayerRecursively(gameObject, LayerMask.NameToLayer("Player"));
+
+          // FindObjectOfType<CameraMovement>().target = transform;
+      // }
+      // else if(CompareTag("NPC"))
+      // {
+        
+        // rb.bodyType = RigidbodyType2D.Kinematic;
+
+        // SetLayerRecursively(gameObject, LayerMask.NameToLayer("Default"));
+        // npcRandomMovementCoro = StartCoroutine(MoveCharacterRandomly());
+        // npcRandomMovementCoro = null;
+      // }
+
+
+    }
+  // Start is called before the first frame update
+  void Start()    
+    {
+      currentContactQuadrant = ContactQuadrant.BottomRight;
+    }
+
+  // Update is called once per frame
+  public void Update()
+  {
+    if(this.gameObject.tag == "Player")
+    {
+      HandleSpaceBarReactivation();
+      if(movementAutopilot == true)
+      {
+        HandleMovementReactivation();
+      }
+      // Debug.Log("Facing Left:" + facingLeft);
+    }
+    
+  }
+  void FixedUpdate()
+    {
+      // if(this.gameObject.tag == "Player")
+      // {
+        MoveCharacter(); 
+      // }
+    }
+
+
+  public void MoveCharacter()
+  {
+      // get user inputs
+    if(this.gameObject.tag == "Player")
+    {
+      change = Vector3.zero;
+
+      if (IsInputFieldFocused() || playerOnFurniture)
+      {
+        change = Vector3.zero;
+      }
+      else if (Input.GetKey(KeyCode.W)||Input.GetKey(KeyCode.A)||Input.GetKey(KeyCode.S)||Input.GetKey(KeyCode.D))
+      {
+        // isJoyStick = false;
+        change.x = Input.GetAxisRaw("LeftSideHoriz1");
+        change.y = Input.GetAxisRaw("LeftSideVert1");
+      }
+      else if (Input.GetKey(KeyCode.UpArrow)||Input.GetKey(KeyCode.LeftArrow)||Input.GetKey(KeyCode.DownArrow)||Input.GetKey(KeyCode.RightArrow))
+      {
+        // isJoyStick = false;
+        change.x = Input.GetAxisRaw("Horizontal");
+        change.y = Input.GetAxisRaw("Vertical");
+      }
+      else
+      {
+        // isJoyStick = true;
+        change.x = Input.GetAxis("Horizontal");
+        change.y = Input.GetAxis("Vertical");
+      }
+    } 
+
+    if(change != Vector3.zero)
+      {
+        if(motionDirection == "normal") 
+        {
+          MoveCharacterNormalDirection();
+        } 
+        else if (motionDirection == "inclineLeftAway") {
+            MoveCharacterVerticalInclineLeftAway();} 
+        else if (motionDirection == "inclineRightAway") 
+          {MoveCharacterVerticalInclineRightAway();}
+        // else if (motionDirection == "inclineLeftToward") 
+        //   {MoveCharacterVerticalInclineLeftToward();}
+        // else if (motionDirection == "inclineRightToward") 
+        //   {MoveCharacterVerticalInclineRightToward();}
+        else if (motionDirection == "upDownLadder") // why is there updown up and down??? because it is optimising player experience with movement continuity
+          {MoveCharacterUpDownLadder();}
+        else if (motionDirection == "upLadder") 
+          {MoveCharacterUpLadder();}
+        else if (motionDirection == "downLadder") 
+          {MoveCharacterDownLadder();}
+    }
+    else if (motionDirection == "upLadder")
+    {
+      motionDirection = "upDownLadder";
+    }
+    else if (motionDirection == "downLadder")
+    {
+      motionDirection = "upDownLadder";
+    }
+    else if(motionDirection == "none")
+    {
+      // do nutting
+    }
+    else // if change == 0 :^)
+    {
+      if(playerOnFurniture == true)
+      {
+        characterAnimation.Animate(characterAnimation.sit, 1, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      }
+      else if (motionDirection == "upLadder" || motionDirection == "downLadder" || motionDirection == "upDownLadder")
+      {
+        //maybe do nuttin again my guy?
+        // characterAnimation.Animate(characterAnimation.idle, 1, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      }
+      else if(playerOnWheelchair) // not optimal
+      {
+        characterAnimation.Animate(characterAnimation.rideWheelchair, 1, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      }
+      else if(!characterOnBike ) // not optimal
+      {
+        characterAnimation.Animate(characterAnimation.idle, 1, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      }
+      else //  if player on boike
+      {
+        characterAnimation.Animate(characterAnimation.rideBike, 1, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      }
+    }
+  }
+  void MoveCharacterVerticalInclineLeftAway()
+  {
+  // Calculate the angle in degrees (-180 to 180 degrees)
+  float angle = Mathf.Atan2(change.y, change.x) * Mathf.Rad2Deg;
+
+  // Adjust by 90 degrees to align 0 degrees with "up"
+  angle -= 90f;
+
+  // Convert negative angles to positive angles (0 to 360 degrees)
+  if (angle < 0) angle += 360;  
+
+  // Map the angle to movement directions and animations
+  if (angle > 0f && angle <= 90f)           { change = new Vector3(-0.7f,1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; } // Inverted right-up to left-up      
+  else if (angle > 90f && angle <= 135f)    { change = new Vector3(-1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftAnim; facingLeft = true; } // Inverted right to left
+  else if (angle > 135f && angle < 180)    { change = new Vector3(-1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; } // Inverted right-down to left-down
+  else if (angle > 180f && angle <= 225f)   { change = new Vector3(0.7f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; }  // Inverted left-down to right-down
+  else if ((angle == 180f)) { change = new Vector3(0.7f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; }
+
+  else if (angle > 225f && angle <= 270f)   { change = new Vector3(0.7f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; }  // Inverted left-down to right-down
+  else if ((angle > 270f && angle <= 360f)) { change = new Vector3(1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; } // Up
+  else if ((angle == 0f)) { change = new Vector3(-0.7f,1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; }
+
+  characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+  rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+  }
+
+  void MoveCharacterVerticalInclineRightAway() // needs updating
+  {
+
+    // Calculate the angle in degrees (-180 to 180 degrees)
+    float angle = Mathf.Atan2(change.y, change.x) * Mathf.Rad2Deg;
+
+    // Adjust by 90 degrees to align 0 degrees with "up"
+    angle -= 90f;
+
+    // Convert negative angles to positive angles (0 to 360 degrees)
+    if (angle < 0) angle += 360;  
+
+    // Map the angle to movement directions and animations
+    if (angle > 0f && angle < 90f)           { change = new Vector3(-1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; } // Inverted right-up to left-up      
+    else if (angle >= 90f && angle <= 135f)    { change = new Vector3(-0.7f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftAnim; facingLeft = true; } // Inverted right to left
+    else if (angle > 135f && angle < 180)    { change = new Vector3(-0.7f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; } // Inverted right-down to left-down
+    else if (angle > 180f && angle <= 225f)   { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; }  // Inverted left-down to right-down
+    else if ((angle == 180f)) { change = new Vector3(-0.7f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; }
+
+    else if (angle > 225f && angle < 270f)   { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; }  // Inverted left-down to right-down
+    else if ((angle >= 270f && angle <= 360f)) { change = new Vector3(0.7f,1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; } // Up
+    else if ((angle == 0f)) { change = new Vector3(0.7f,1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; }
+
+    characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+    rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);    
+
+  }
+  // void MoveCharacterVerticalInclineLeftToward()
+  // {
+  //   if (change == Vector3.right+Vector3.up)   { change = new Vector3(1f,-0.2f,0f); }
+  //   if (change == Vector3.left+Vector3.up)    { change = new Vector3(-1f,0.2f,0f); }
+  //   if (change == Vector3.up)                 { change = new Vector3(-1f,0.2f,0f); }
+  //   if (change == Vector3.right)              { change = new Vector3(1f,-0.2f,0f); }
+  //   if (change == Vector3.right+Vector3.down) { change = new Vector3(1f,-0.2f,0f); }
+  //   if (change == Vector3.left+Vector3.down)  { change = new Vector3(-1f,0.2f,0f); }
+  //   if (change == Vector3.down)               { change = new Vector3(1f,-0.2f,0f); }
+  //   if (change == Vector3.left)               { change = new Vector3(-1f,0.2f,0f); }
+  //   // AnimateMovement(movementStartIndex, movementFrameCount, currentAnimationDirection, bodyTypeNumber);
+  //   rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+      
+  // }
+
+  // void MoveCharacterVerticalInclineRightToward()
+  // {
+  //   if (change == Vector3.right+Vector3.up)   { change = new Vector3(1f,0.2f,0f); }
+  //   if (change == Vector3.left+Vector3.up)    { change = new Vector3(-1f,-0.2f,0f); }
+  //   if (change == Vector3.up)                 { change = new Vector3(-1f,-0.2f,0f); }
+  //   if (change == Vector3.right)              { change = new Vector3(1f,0.2f,0f); }
+  //   if (change == Vector3.right+Vector3.down) { change = new Vector3(1f,0.2f,0f); }
+  //   if (change == Vector3.left+Vector3.down)  { change = new Vector3(-1f,-0.2f,0f); }
+  //   if (change == Vector3.down)               { change = new Vector3(1f,0.2f,0f); }
+  //   if (change == Vector3.left)               { change = new Vector3(-1f,-0.2f,0f); }
+  //   // AnimateMovement(movementStartIndex, movementFrameCount, currentAnimationDirection, bodyTypeNumber);
+  //   rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+      
+  // } 
+  void MoveCharacterUpDownLadder()
+  { 
+      if (change == Vector3.right+Vector3.up)   { change = new Vector3(0f,0f,0f);}
+      if (change == Vector3.left+Vector3.up)    { change = new Vector3(0f,0f,0f);}
+      if (change == Vector3.up)                 { change = new Vector3(0f,1f,0f);}
+      if (change == Vector3.right)              { change = new Vector3(0f,0f,0f);}
+      if (change == Vector3.right+Vector3.down) { change = new Vector3(0f,-0f,0f);}
+      if (change == Vector3.left+Vector3.down)  { change = new Vector3(0f,-0f,0f);}
+      if (change == Vector3.down)               { change = new Vector3(0f,-1f,0f);}
+      if (change == Vector3.left)               { change = new Vector3(0f,-0f,0f);}
+      characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+  }
+  void MoveCharacterUpLadder()
+  { 
+      if (change == Vector3.right+Vector3.up)   { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.left+Vector3.up)    { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.up)                 { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.right)              { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.right+Vector3.down) { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.left+Vector3.down)  { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.down)               { change = new Vector3(0f,1f,0f);}
+      else if (change == Vector3.left)               { change = new Vector3(0f,1f,0f);}
+      characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+  }
+  void MoveCharacterDownLadder()
+  { 
+      if (change == Vector3.right+Vector3.up)   { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.left+Vector3.up)    { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.up)                 { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.right)              { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.right+Vector3.down) { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.left+Vector3.down)  { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.down)               { change = new Vector3(0f,-1f,0f);}
+      else if (change == Vector3.left)               { change = new Vector3(0f,-1f,0f);}
+      characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+      rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+  }
+
+
+
+  public Dictionary<Direction, Direction> controlDirectionToPlayerDirection = new Dictionary<Direction, Direction>(){
+    {Direction.Left, Direction.Left},
+    {Direction.UpLeft, Direction.UpLeft},
+    {Direction.UpFacingLeft, Direction.UpFacingLeft},
+    {Direction.UpFacingRight, Direction.UpFacingRight},
+    {Direction.UpRight, Direction.UpRight},
+    {Direction.Right, Direction.Right},
+    {Direction.RightDown, Direction.RightDown},
+    {Direction.DownFacingLeft, Direction.DownFacingLeft},
+    {Direction.DownFacingRight, Direction.DownFacingRight},
+    {Direction.DownLeft, Direction.DownLeft},
+    {Direction.Nothing, Direction.Nothing},
+  };
+
+
+  public void ResetPlayerMovement()
+  {
+    controlDirectionToPlayerDirection[Direction.Left] = Direction.Left;
+    controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpLeft;
+    controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpFacingLeft;
+    controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpFacingRight;
+    controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpRight;
+    controlDirectionToPlayerDirection[Direction.Right] = Direction.Right;
+    controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
+    controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownFacingRight;
+    controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownFacingLeft;
+    controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
+    controlDirectionToPlayerDirection[Direction.Nothing] = Direction.Nothing;
+  }
+
+  public void MoveCharacterNormalDirection()
+  { 
+    // Calculate the angle in degrees (-180 to 180 degrees)
+    float angle = Mathf.Atan2(change.y, change.x) * Mathf.Rad2Deg;
+
+    // Adjust by 90 degrees to align 0 degrees with "up"
+    angle -= 90f;
+
+    // Debug.Log(playerTouchingCollider);
+
+    // Convert negative angles to positive angles (0 to 360 degrees)
+    if (angle < 0) angle += 360;
+    
+    // if(isJoyStick && !characterOnBike) // joy stick
+    // {
+    //   if (angle > 0f && angle <= 90f)   
+    //   { 
+    //     controlDirection = Direction.UpLeft; 
+    //   } // Inverted right-up to left-up
+    //   else if (angle > 90f && angle < 180f)   
+    //   { 
+    //     controlDirection = Direction.DownLeft;
+    //   } // Down
+    //   else if (angle > 180f && angle <= 270f)   
+    //   { 
+    //     controlDirection = Direction.RightDown; 
+    //   }
+    //   else if ((angle > 270f && angle <= 360f)) 
+    //   { 
+    //     controlDirection = Direction.UpRight;
+    //   } // Up
+      
+    //   if (activeCollisions.Count > 0 && !characterOnThresh) {
+    //     controlDirection = HandleQuadrantContact(controlDirection, currentContactQuadrant);
+    //   }
+
+    //   // Map control directions to player directions and animations
+    //   UpdateCharacterDirection(controlDirection);
+    //   // Handle animation and movement
+    //   characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+    //   rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+    // }
+    // else 
+    if(!characterOnBike) // main walking (keyboard)
+    {
+        if ((angle > 0f && angle <= 22.5f))   
+        { 
+          controlDirection = Direction.UpFacingLeft;
+        } // Up
+        else if ((angle == 0f))   
+        {
+          if(facingLeft == true)
+          {
+              controlDirection = Direction.UpFacingLeft;
+          }
+          else //facing right
+          {
+              controlDirection = Direction.UpFacingRight;
+          }
+        }
+        else if (angle > 22.5f && angle <= 67.5f)   
+          { 
+            controlDirection = Direction.UpLeft; 
+          } // Inverted right-up to left-up
+        else if (angle > 67.5f && angle <= 112.5f)  
+          { 
+            controlDirection = Direction.Left; 
+          } // Inverted right to left
+        else if (angle > 112.5f && angle <= 157.5f) 
+        { 
+          controlDirection = Direction.DownLeft; 
+        } // Inverted right-down to left-down
+        else if (angle > 157.5f && angle < 180f)   
+        { 
+          controlDirection = Direction.DownFacingLeft;
+        } // Down
+        else if (angle == 180f)  
+        {
+          if(facingLeft == true)
+          {
+            controlDirection = Direction.DownFacingLeft;
+          }
+          else
+          {
+            controlDirection = Direction.DownFacingRight;
+          }
+        }
+        else if (angle > 180f && angle <= 202.5f)   
+        { 
+          controlDirection = Direction.DownFacingRight; 
+        } // Down
+        else if (angle > 202.5f && angle <= 247.5f) 
+        { 
+          controlDirection = Direction.RightDown;
+        }  // Inverted left-down to right-down
+        else if (angle > 247.5f && angle <= 292.5f) 
+        { 
+          controlDirection = Direction.Right;         
+        } // Inverted left to right
+        else if (angle > 292.5f && angle <= 337.5f) 
+        { 
+          controlDirection = Direction.UpRight;
+        }  // Inverted left-up to right-up
+        else if ((angle > 337.5f && angle <= 360f)) 
+        { 
+          controlDirection = Direction.UpFacingRight;
+        } // Up
+
+
+        if (activeCollisions.Count > 0 && !characterOnThresh) {
+          controlDirection = HandleQuadrantContact(controlDirection, currentContactQuadrant);
+        }
+
+        // Map control directions to player directions and animations
+        UpdateCharacterDirection(controlDirection);
+        // Handle animation and movement
+        characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+        rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+    }
+    else if(characterOnBike)
+    {
+        // Map the angle to movement directions and animations
+        if (angle > 0f && angle <= 90f)           { change = new Vector3(-1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; } // Inverted right-up to left-up      
+        else if (angle > 90f && angle <= 135f)    { change = new Vector3(-1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftAnim; facingLeft = true; } // Inverted right to left
+        else if (angle > 135f && angle < 180)    { change = new Vector3(-1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; } // Inverted right-down to left-down
+        else if (angle > 180f && angle <= 225f)   { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; }  // Inverted left-down to right-down
+        else if ((angle == 180f))   
+          { 
+            if(facingLeft == true)
+            {
+              change = new Vector3(-1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true;  // Up
+            }
+            else
+            {
+              change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; // Up
+            }
+          }
+        else if (angle > 225f && angle <= 270f)   { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; }  // Inverted left-down to right-down
+        else if ((angle > 270f && angle <= 360f)) { change = new Vector3(1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; } // Up
+        else if ((angle == 0f))   
+                { 
+                  if(facingLeft == true)
+                  {
+                    change = new Vector3(-1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true;  // Up
+                  }
+                  else
+                  {
+                    change = new Vector3(1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; // Up
+                  }
+                }
+        
+        else if (angle > 225f && angle <= 270f) { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; } // Inverted left to right
+
+        // Handle animation and movement
+        characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
+        rb.MovePosition(rb.position + (Vector2)change * movementSpeed * Time.deltaTime);
+        // rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
+    }
+  } 
+
+  private Direction HandleQuadrantContact(Direction controlDirection, ContactQuadrant contactQuadrant)
+  {
+     if (controlDirection == Direction.UpFacingRight && contactQuadrant == ContactQuadrant.TopLeft)
+     {
+       return Direction.UpRight;
+     }
+     else if(controlDirection == Direction.UpFacingRight && currentContactQuadrant == ContactQuadrant.TopRight)
+     {
+      return Direction.UpLeft;
+     }
+     else if(controlDirection == Direction.UpRight && currentContactQuadrant == ContactQuadrant.TopRight)
+     {
+      return Direction.RightDown;
+     }
+     else if(controlDirection == Direction.Right && currentContactQuadrant == ContactQuadrant.TopRight)
+     {
+      return Direction.RightDown;
+     }
+     else if(controlDirection == Direction.Right && currentContactQuadrant == ContactQuadrant.BottomRight)
+     {
+      return Direction.UpRight;
+     }
+     else if(controlDirection == Direction.RightDown && currentContactQuadrant == ContactQuadrant.BottomRight)
+     {
+      return Direction.UpRight;
+     }
+     else if(controlDirection == Direction.DownFacingRight && currentContactQuadrant == ContactQuadrant.BottomLeft)
+     {
+      return Direction.RightDown;
+     }
+     else if(controlDirection == Direction.DownFacingRight && currentContactQuadrant == ContactQuadrant.BottomRight)
+     {
+      return Direction.DownLeft;
+     }
+     else if(controlDirection == Direction.DownFacingLeft && currentContactQuadrant == ContactQuadrant.BottomRight)
+     {
+      return Direction.DownLeft;
+     }
+     else if(controlDirection == Direction.DownFacingLeft && currentContactQuadrant == ContactQuadrant.BottomLeft)
+     {
+      return Direction.RightDown;
+     }
+     else if(controlDirection == Direction.DownLeft && currentContactQuadrant == ContactQuadrant.BottomLeft)
+     {
+      return Direction.UpLeft;
+     }
+     else if(controlDirection == Direction.Left && currentContactQuadrant == ContactQuadrant.TopLeft)
+     {
+      return Direction.DownLeft;
+     }
+     else if(controlDirection == Direction.Left && currentContactQuadrant == ContactQuadrant.BottomLeft)
+     {
+      return Direction.UpLeft;
+     }
+     else if(controlDirection == Direction.UpLeft && currentContactQuadrant == ContactQuadrant.TopLeft)
+     {
+      return Direction.DownLeft;
+     }
+     else if(controlDirection == Direction.UpFacingLeft && currentContactQuadrant == ContactQuadrant.TopLeft)
+     {
+      return Direction.UpRight;
+     }
+     else if(controlDirection == Direction.UpFacingLeft && currentContactQuadrant == ContactQuadrant.TopRight)
+     {
+      return Direction.UpLeft;
+     }
+
+    return controlDirection; // Keeps the same direction if no condition is met
+
+  }
+
+  public void UpdateCharacterDirection(Direction controlDirection)
+  {    
+    if(this.gameObject.tag == "Player")
+    {
+      Direction playerDirection = controlDirectionToPlayerDirection[controlDirection];
+      if      (playerDirection == Direction.UpFacingLeft) { change = new Vector3(0f,1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; facingUp = true;}
+      else if (playerDirection == Direction.UpFacingRight) { change = new Vector3(0f,1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; facingUp = true;}
+      else if (playerDirection == Direction.UpRight) { change = new Vector3(1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; facingUp = true;}
+      else if (playerDirection == Direction.Right) { change = new Vector3(1f,0f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; facingUp = false;}
+      else if (playerDirection == Direction.RightDown) { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; facingUp = false;}
+      else if (playerDirection == Direction.DownFacingRight) { change = new Vector3(0f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; facingUp = false;}
+      else if (playerDirection == Direction.DownFacingLeft) { change = new Vector3(0f,-1f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; facingUp = false;}
+      else if (playerDirection == Direction.DownLeft) { change = new Vector3(-1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; facingUp = false;}
+      else if (playerDirection == Direction.Left) { change = new Vector3(-1f,0f,0f); characterAnimation.currentAnimationDirection = characterAnimation.leftAnim; facingLeft = true; facingUp = false;}
+      else if (playerDirection == Direction.UpLeft) { change = new Vector3(-1f,0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; facingUp = true; }
+      else if (playerDirection == Direction.Nothing) { change = Vector3.zero; }
+    }
+    else if(this.gameObject.tag == "NPC")
+    {
+     Direction playerDirection = controlDirectionToPlayerDirection[controlDirection];
+      if      (playerDirection == Direction.UpFacingLeft) { characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; facingUp = true;}
+      else if (playerDirection == Direction.UpFacingRight) { characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; facingUp = true;}
+      else if (playerDirection == Direction.UpRight) { characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim; facingLeft = false; facingUp = true;}
+      else if (playerDirection == Direction.Right) { characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; facingUp = false;}
+      else if (playerDirection == Direction.RightDown) { characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; facingUp = false;}
+      else if (playerDirection == Direction.DownFacingRight) { characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim; facingLeft = false; facingUp = false;}
+      else if (playerDirection == Direction.DownFacingLeft) { characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; facingUp = false;}
+      else if (playerDirection == Direction.DownLeft) { characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim; facingLeft = true; facingUp = false;}
+      else if (playerDirection == Direction.Left) { characterAnimation.currentAnimationDirection = characterAnimation.leftAnim; facingLeft = true; facingUp = false;}
+      else if (playerDirection == Direction.UpLeft) { characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim; facingLeft = true; facingUp = true;}
+      else if (playerDirection == Direction.Nothing) { change = Vector3.zero; } 
+    }
+  }
+
+  public bool IsInputFieldFocused()
+  {
+      foreach (TMP_InputField inputField in inputFields)
+      {
+          if (inputField.isFocused)
+          {
+              return true;
+          }
+      }
+      return false;
+  }
+
+  public void SetAlpha(GameObject treeNode, float alpha) // opening cupboards
+  {
+    SpriteRenderer sr = treeNode.GetComponent<SpriteRenderer>();
+
+    if(treeNode != transform.Find("bike"))
+    {
+      if(sr.color.a != 0)
+      {
+        sr.color = new Color(sr.color.r, sr.color.g, sr.color.b, alpha);
+      }
+    }
+  }  
+
+  public IEnumerator MoveCharacterRandomly()
+  {
+    yield return new WaitForSeconds(0.3f);
+
+    change = Vector3.zero;
+
+    // if(!myCharacterMovement.characterOnThresh)
+    // {
+      yield return new WaitForSeconds(Random.Range(5,16));
+
+      change.x = Random.Range(-1, 2);     
+      change.y = Random.Range(-1, 2);
+
+      yield return new WaitForSeconds(Random.Range(1,4));
+    // }
+
+    change = Vector3.zero;
+
+    yield return new WaitForSeconds(Random.Range(5,8));
+
+    npcRandomMovementCoro = StartCoroutine(MoveCharacterRandomly()); 
+  }
+
+
+  public HashSet<Collider2D> activeCollisions = new HashSet<Collider2D>(); // Keeps track of active collisions
+
+  private ContactQuadrant lastContactQuadrant = ContactQuadrant.None;
+
+  private void OnCollisionEnter2D(Collision2D collision)
+  {
+    if (gameObject.CompareTag("Player"))
+    {
+        HandleCollisionAndGrabbingQuadrants(collision);
+    }
+    else if (gameObject.CompareTag("NPC"))
+    {
+        if (Random.value < 0.5f)
+        {
+            ReverseDirection(false);
+        }
+        else
+        {
+            HandleCollisionAndGrabbingQuadrants(collision);
+        }
+    }
+  }
+
+  private void OnCollisionExit2D(Collision2D collision)
+  {
+      if (this.gameObject.CompareTag("Player"))
+      {
+          activeCollisions.Remove(collision.collider);
+
+          if (activeCollisions.Count > 0)
+          {
+              Collider2D remainingCollider = null;
+              foreach (var col in activeCollisions)
+              {
+                  remainingCollider = col;
+                  break;
+              }
+
+              if (remainingCollider != null)
+              {
+                  Bounds playerBounds = boxCollider.bounds;
+                  Vector2 newContactPoint = remainingCollider.ClosestPoint(playerBounds.center);
+                  Vector2 localNewContactPoint = transform.InverseTransformPoint(newContactPoint);
+                  Vector2 localCenter = transform.InverseTransformPoint(playerBounds.center);
+
+                  currentContactQuadrant = DetermineContactQuadrant(localNewContactPoint, localCenter);
+              }
+          }
+      }
+  }
+
+
+  private ContactQuadrant DetermineContactQuadrant(Vector2 contactPoint, Vector2 center)
+  {
+      // Determine the quadrant in local space
+      if (contactPoint.x >= center.x && contactPoint.y >= center.y)
+          return ContactQuadrant.TopRight;
+      else if (contactPoint.x <= center.x && contactPoint.y >= center.y)
+          return ContactQuadrant.TopLeft;
+      else if (contactPoint.x <= center.x && contactPoint.y <= center.y)
+          return ContactQuadrant.BottomLeft;
+      else
+          return ContactQuadrant.BottomRight;
+  }
+
+
+  public void ReverseDirection(bool isTrigger = false)
+  {
+    // Reverse the direction when a collision occurs
+    change *= -1;
+    if(isTrigger)
+    {
+      if(this.npcRandomMovementCoro != null)
+      {
+          StopCoroutine(this.npcRandomMovementCoro);
+      }
+      npcRandomMovementCoro = StartCoroutine(MoveCharacterRandomly()); 
+      // npcRandomMovementCoro = null;
+    }
+  }
+
+  public IEnumerator DeactivateSpaceBar()
+  {
+    while ((Input.GetKey(KeyCode.Space) || 
+          Input.GetKey(KeyCode.JoystickButton0) ||  // A button
+          Input.GetKey(KeyCode.JoystickButton1) ||  // B button
+          Input.GetKey(KeyCode.JoystickButton2) ||  // X button
+          Input.GetKey(KeyCode.JoystickButton3)))
+    {
+      spaceBarDeactivated = true;
+
+      yield return null;
+    }
+      spaceBarDeactivated = false;
+  }
+
+  public void StartDeactivateSpaceBar()
+  {
+      if (allowTimeForSpaceBarCoro != null)
+      {
+          StopCoroutine(allowTimeForSpaceBarCoro);
+      }
+      allowTimeForSpaceBarCoro = StartCoroutine(DeactivateSpaceBar());
+  }
+
+  public void StopDeactivateSpaceBar()
+  {
+      if (allowTimeForSpaceBarCoro != null)
+      {
+          StopCoroutine(allowTimeForSpaceBarCoro);
+          allowTimeForSpaceBarCoro = null;
+          spaceBarDeactivated = false;
+      }
+  }
+
+  Color HexToColor(string hex)
+  {
+      Color newCol;
+      if (ColorUtility.TryParseHtmlString(hex, out newCol))
+      {
+          return newCol;
+      }
+      else
+      {
+          Debug.LogError("Invalid hex color string: " + hex);
+          return Color.black; // Return black if conversion fails
+      }
+  }  
+
+  IEnumerator LateStartSpawnInsideCoro()
+  {
+      // Wait until the end of the current frame
+      yield return new WaitForEndOfFrame();
+      // SetAsChild();
+
+  }
+
+
+  public static void SetTreeSortingLayer(GameObject gameObject, string sortingLayerName)
+  {
+      if(gameObject.GetComponent<SpriteRenderer>() != null) {
+        gameObject.GetComponent<SpriteRenderer>().sortingLayerName = sortingLayerName;
+      }
+      foreach (Transform child in gameObject.transform)
+      {
+          CharacterMovement.SetTreeSortingLayer(child.gameObject, sortingLayerName);
+      }
+  }
+  private Vector2 previousJoystickDirection;
+  public void HandleMovementReactivation()
+  {
+    // Detect keyboard input
+    if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || 
+        Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.RightArrow) ||
+        Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.A) || 
+        Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D))
+    {
+        movementAutopilot = false;
+    }
+
+    // Detect joystick direction change
+    Vector2 currentJoystickDirection = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+
+    if (currentJoystickDirection != previousJoystickDirection && currentJoystickDirection.magnitude > 0.1f)
+    {
+      movementAutopilot = false;
+    }
+
+    // Update the previous joystick direction
+    previousJoystickDirection = currentJoystickDirection; 
+  }
+  public void HandleSpaceBarReactivation()
+  {
+    if ((Input.GetKeyUp(KeyCode.Space) || 
+        Input.GetKeyUp(KeyCode.JoystickButton0) ||  // A button
+        Input.GetKeyUp(KeyCode.JoystickButton1) ||  // B button
+        Input.GetKeyUp(KeyCode.JoystickButton2) ||  // X button
+        Input.GetKeyUp(KeyCode.JoystickButton3)))
+    {
+      spaceBarDeactivated = false;   
+    }
+  }
+
+  public void HandleCollisionAndGrabbingQuadrants(Collision2D collision)
+  {
+    // Get the player's box collider (child)
+
+    // Get bounds and contact point
+    Bounds playerBounds = boxCollider.bounds;
+    Vector2 contactPoint = collision.GetContact(0).point;
+
+    // Transform the contact point and bounds center to the local space of the root GameObject
+    Vector2 localContactPoint = transform.InverseTransformPoint(contactPoint);
+    Vector2 localCenter = transform.InverseTransformPoint(playerBounds.center);
+
+    // Update the lastContactQuadrant
+    lastContactQuadrant = currentContactQuadrant;
+
+    // Determine quadrant using local space
+    currentContactQuadrant = DetermineContactQuadrant(localContactPoint, localCenter);
+    // Debug.Log($"Contact Quadrant: {currentContactQuadrant}, Contact Point (local): {localContactPoint}, Center (local): {localCenter}");
+
+    activeCollisions.Add(collision.collider); // Add the collider to active collisions
+  }
+
+  
+}
+

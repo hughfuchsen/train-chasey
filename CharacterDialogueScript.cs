@@ -1,0 +1,412 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+public class CharacterDialogueScript : MonoBehaviour
+{
+    public bool isPlayerInRange = false;
+    private Color zeroAlphaColor;
+
+    
+
+    private Coroutine npcStareAtPlayerCoro;
+    private Coroutine stopNpcStareAtPlayerCoro;
+    public bool staring = false;
+    private float staringTime = 0f;
+
+    public CharacterAnimation characterAnimation;
+    private CharacterMovement characterMovement;
+    
+    private CharacterMovement playerCM;
+    private Transform playerTransform;
+    private GameObject player;
+
+    public float typingSpeed = 0.03f; // normal typing speed
+    private Coroutine typingCoroutine;
+    private Coroutine displayGoodbyeCoro;
+    private bool isTyping = false;
+    private bool fastForward = false;
+
+
+   
+    void Start()
+    {
+        // Find the TextMeshPro component in the scene (or assign it in the Inspector)
+
+        GameObject[] responseTextObj = GameObject.FindGameObjectsWithTag("ResponseText");
+        GameObject[] responseBGObjects = GameObject.FindGameObjectsWithTag("responseBGImage");
+        List<TextMeshProUGUI> responseTextList = new List<TextMeshProUGUI>();
+        List<Image> responseBGrndImages = new List<Image>();
+
+        foreach (GameObject obj in responseTextObj)
+        {
+            TextMeshProUGUI txt = obj.GetComponent<TextMeshProUGUI>();
+            if (txt != null)
+            {
+                responseTextList.Add(txt);
+            }
+        }
+
+        foreach (GameObject obj in responseBGObjects)
+        {
+            Image img = obj.GetComponent<Image>();
+            if (img != null)
+            {
+                responseBGrndImages.Add(img);
+            }
+        }
+
+        // Initialize the dialogue list
+        // dialogues = new List<string> { dialogueText1, dialogueText2, dialogueText3, dialogueText4 };
+
+        characterMovement = GetComponent<CharacterMovement>();
+        
+        
+        characterAnimation = GetComponent<CharacterAnimation>();
+
+
+    
+
+
+        foreach (TextMeshProUGUI txt in responseTextList)
+        {
+            if (txt != null)
+            {
+                txt.text = "";
+            }
+        }
+
+
+        zeroAlphaColor = Color.white;
+        zeroAlphaColor.a = 0f;
+
+
+        foreach (Image img in responseBGrndImages)
+        {
+            if (img != null)
+            {
+                img.color = zeroAlphaColor;
+            }
+        }
+
+
+    }
+
+   void Update()
+    {
+        // if (isPlayerInRange)
+        // {
+        //     bool bothOutside = characterMovement.playerIsOutside && playerCM.playerIsOutside;
+        //     bool bothInside = !characterMovement.playerIsOutside && !playerCM.playerIsOutside;
+
+        //     if (bothOutside || bothInside)
+        //     {
+        //         // Press Space or controller button
+        //         if (Input.GetKeyDown(KeyCode.Space) ||
+        //             Input.GetKeyDown(KeyCode.JoystickButton0) ||
+        //             Input.GetKeyDown(KeyCode.JoystickButton1) ||
+        //             Input.GetKeyDown(KeyCode.JoystickButton2))
+        //         {
+        //             if (isTyping)
+        //             {
+        //                 // If text is typing, finish it instantly
+        //                 fastForward = true;
+        //             }
+        //             else
+        //             {
+        //                 // Show next line
+        //                 ShowNextDialogue();
+        //             }
+        //         }
+
+        //         // If player is holding space, speed up text
+        //         fastForward = Input.GetKey(KeyCode.Space);
+        //     }
+        // }
+
+    }
+
+
+
+    IEnumerator TypeDialogue(string sentence)
+    {
+        isTyping = true;
+        fastForward = false;
+
+        foreach (char letter in sentence)
+        {
+
+            if (fastForward)
+                yield return new WaitForSeconds(typingSpeed / 20f); // faster while holding
+            else
+                yield return new WaitForSeconds(typingSpeed);
+        }
+
+        isTyping = false;
+    }
+
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.transform.root.CompareTag("Player") && characterAnimation.characterType == CharacterType.person)
+        {  
+            player = other.transform.root.gameObject;
+            playerCM = player.GetComponent<CharacterMovement>();
+            playerTransform = player.transform;
+            //stop coros 
+            if (stopNpcStareAtPlayerCoro != null)
+            {
+                StopCoroutine(StopNpcStareAtPlayer());
+                stopNpcStareAtPlayerCoro = null;
+            }
+            if (npcStareAtPlayerCoro != null)
+            {
+                StopCoroutine(NpcStareAtPlayer());
+                npcStareAtPlayerCoro = null;
+            }
+
+
+            if(playerCM.change != Vector3.zero 
+            && (playerCM.currentArea == characterMovement.currentArea))
+                {
+                    isPlayerInRange = true;
+                    staring = true; //initiate staring;
+                    npcStareAtPlayerCoro = StartCoroutine(NpcStareAtPlayer());
+                }
+
+            // currentDialogueIndex = Random.Range(0,4); // Reset dialogue index on re-entry
+
+            // Stop the NPC movement coroutine if it's running
+            if (characterMovement.npcRandomMovementCoro != null)
+            {
+                characterMovement.StopCoroutine(characterMovement.npcRandomMovementCoro);
+                characterMovement.change = Vector3.zero;
+                characterMovement.npcRandomMovementCoro = null;
+            }
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (other.transform.root.CompareTag("Player") && characterAnimation.characterType == CharacterType.person)
+        {  
+            player = other.transform.root.gameObject;
+            playerCM = player.GetComponent<CharacterMovement>();
+            playerTransform = player.transform;
+
+            if(playerCM.change != Vector3.zero 
+            && (playerCM.currentArea == characterMovement.currentArea))
+            {
+                if (stopNpcStareAtPlayerCoro != null)
+                {
+                    StopCoroutine(StopNpcStareAtPlayer());
+                    stopNpcStareAtPlayerCoro = null;
+                }
+
+                isPlayerInRange = true;
+                staring = true;
+                if(npcStareAtPlayerCoro == null)
+                    npcStareAtPlayerCoro = StartCoroutine(NpcStareAtPlayer());
+            }
+            else if (playerCM.currentArea != characterMovement.currentArea)
+            {
+                isPlayerInRange = false;
+            }
+            else if(playerCM.change == Vector3.zero)
+            {
+                if(stopNpcStareAtPlayerCoro == null && staring == true)
+                    stopNpcStareAtPlayerCoro = StartCoroutine(StopNpcStareAtPlayer(true));
+            }
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.transform.root.CompareTag("Player") && characterAnimation.characterType == CharacterType.person)
+        {
+            isPlayerInRange = false;
+            // initiate the stopping of the staring at the player
+            // if(dialogueDisplay.text != "")
+
+            if (stopNpcStareAtPlayerCoro != null)
+            {
+                StopCoroutine(StopNpcStareAtPlayer());
+                stopNpcStareAtPlayerCoro = null;
+            }
+            stopNpcStareAtPlayerCoro = StartCoroutine(StopNpcStareAtPlayer());
+
+            // if(dialogueDisplay.text != "")
+            // {
+            //     //stop typing coro
+            //     // if(typingCoroutine != null)
+            //     // {StopCoroutine(typingCoroutine); isTyping = false;}
+
+            //     displayGoodbyeCoro = StartCoroutine(ShowByeDialogue());
+            // }
+            // else
+            // {
+            //     dialogueNameDisplay.text = ""; // Clear the name display when player leaves
+            //     dialogueDisplay.text = ""; // Clear the dialogue display when player leaves
+                
+                
+                
+
+            //     //stop typing coro
+            //     if(typingCoroutine != null)
+            //     {StopCoroutine(typingCoroutine); isTyping = false;}
+            // }
+
+        }
+    }
+
+
+    private IEnumerator NpcStareAtPlayer()
+    {
+        // playerCM = GameObject.FindWithTag("Player").GetComponent<CharacterMovement>();
+        // playerTransform = GameObject.FindWithTag("Player").transform;
+
+        while (staring)  // Keep looping
+        {
+            staringTime += Time.deltaTime;
+
+            Vector2 directionToPlayer = playerTransform.position - transform.position;
+            float angle = (Mathf.Atan2(directionToPlayer.y, directionToPlayer.x) * Mathf.Rad2Deg + 90) % 360;
+            if (angle < 0) angle += 360; // Normalize angle to 0-360 range // this angular stuff is functional but cooked atm lol
+
+            // Determine the appropriate direction based on the angle
+            if(characterAnimation.characterType == CharacterType.person) // if it's a humannnnn
+            {
+                if (angle >= 0 && angle < 60)
+                {
+                    characterAnimation.currentAnimationDirection = characterAnimation.rightDownAnim;
+                }
+                else if (angle >= 60 && angle < 120)
+                {
+                    characterAnimation.currentAnimationDirection = characterAnimation.rightAnim;
+                }
+                else if (angle >= 120 && angle < 180)
+                {
+                    characterAnimation.currentAnimationDirection = characterAnimation.upRightAnim;
+                }
+                else if (angle >= 180 && angle < 240)
+                {
+                    characterAnimation.currentAnimationDirection = characterAnimation.upLeftAnim;
+                }
+                else if (angle >= 240 && angle < 300)
+                {
+                    characterAnimation.currentAnimationDirection = characterAnimation.leftAnim;
+                }
+                else if (angle >= 300 && angle < 360)
+                {
+                    characterAnimation.currentAnimationDirection = characterAnimation.leftDownAnim;
+                }
+            }
+            else if(characterAnimation.characterType == CharacterType.chicken) // CHICKEN!
+            {
+                if (angle >= 0 && angle < 180)
+                {
+                    characterMovement.facingLeft = false;
+
+                    if (characterMovement.facingLeft != characterAnimation.isFacingLeft)
+                    {
+                        characterAnimation.isFacingLeft = characterMovement.facingLeft;
+                        characterAnimation.UpdateFlip();
+                    }
+                }
+                else if (angle >= 180 && angle < 360)
+                {
+                    characterMovement.facingLeft = true;
+
+                    if (characterMovement.facingLeft != characterAnimation.isFacingLeft)
+                    {
+                        characterAnimation.isFacingLeft = characterMovement.facingLeft;
+                        characterAnimation.UpdateFlip();
+                    }                
+                }
+            }
+            else if(characterAnimation.characterType == CharacterType.pony 
+            || characterAnimation.characterType == CharacterType.pig) // PONY! or pig :):):):):)
+            {
+                if (angle >= 0 && angle < 90)
+                {
+                    characterMovement.facingLeft = false;
+                    characterMovement.facingUp = false;
+
+                    if (characterMovement.facingLeft != characterAnimation.isFacingLeft)
+                    {
+                        characterAnimation.isFacingLeft = characterMovement.facingLeft;
+                        characterAnimation.UpdateFlip();
+                    }
+                }
+                else if (angle >= 90 && angle < 180)
+                {
+                    characterMovement.facingLeft = false;
+                    characterMovement.facingUp = true;
+
+
+                    if (characterMovement.facingLeft != characterAnimation.isFacingLeft)
+                    {
+                        characterAnimation.isFacingLeft = characterMovement.facingLeft;
+                        characterAnimation.UpdateFlip();
+                    }                
+                }
+                else if (angle >= 180 && angle < 270)
+                {
+                    characterMovement.facingLeft = true;
+                    characterMovement.facingUp = true;
+
+                    if (characterMovement.facingLeft != characterAnimation.isFacingLeft)
+                    {
+                        characterAnimation.isFacingLeft = characterMovement.facingLeft;
+                        characterAnimation.UpdateFlip();
+                    }                
+                }
+                else if (angle >= 270 && angle < 360)
+                {
+                    characterMovement.facingLeft = true;
+                    characterMovement.facingUp = false;
+
+                    if (characterMovement.facingLeft != characterAnimation.isFacingLeft)
+                    {
+                        characterAnimation.isFacingLeft = characterMovement.facingLeft;
+                        characterAnimation.UpdateFlip();
+                    }                
+                }
+            }
+
+
+            yield return null; // Wait until the next frame
+        }
+    }
+
+    private IEnumerator StopNpcStareAtPlayer(bool waitSpecificTime = false)
+    {
+        if(!waitSpecificTime)
+        {
+            if(staringTime < 1f)
+            {yield return null;}
+            else if (staringTime < 2f)
+            {yield return new WaitForSeconds(Random.Range(1, 2f));}
+            else if (staringTime < 3f)
+            {yield return new WaitForSeconds(Random.Range(2, 3f));}
+            else if (staringTime < 5f)
+            {yield return new WaitForSeconds(Random.Range(4, 6f));}
+            else 
+            {yield return new WaitForSeconds(Random.Range(2, 6f));}
+        }
+        else yield return new WaitForSeconds(Random.Range(2, 6f));
+            
+        // Restart the NPC movement coroutine when the player leaves
+        // if (isPlayerInRange == false)
+        // {
+        //     characterMovement.npcRandomMovementCoro = characterMovement.StartCoroutine(characterMovement.MoveCharacterRandomly());
+        //     staring = false;
+        //     staringTime = 0f;
+        // }
+
+    }
+
+
+}
