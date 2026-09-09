@@ -104,7 +104,8 @@ public class GridGenerator : MonoBehaviour
                     if (
                         hit.CompareTag("PlayerCollider") ||
                         hit.CompareTag("NPCCollider") ||
-                        hit.CompareTag("NPC")
+                        hit.CompareTag("NPC") ||
+                        hit.CompareTag("Trigger")
                     )
                     {
                         continue;

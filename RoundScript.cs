@@ -29,6 +29,9 @@ public class RoundScript : MonoBehaviour
     public CameraMovement cam;
 
     [SerializeField] GameObject startButton;
+    [SerializeField] GameObject okButton;
+
+    [HideInInspector] public bool gameHasStarted = false;
 
     public GameObject pig;
     public GameObject pony;
@@ -76,40 +79,40 @@ public class RoundScript : MonoBehaviour
         allCharacters.Add(chicken);
 
 
-        foreach (GameObject character in allCharacters)
-        {
-            CharacterAnimation cAnim = character.GetComponent<CharacterAnimation>();
+        // foreach (GameObject character in allCharacters)
+        // {
+        //     CharacterAnimation cAnim = character.GetComponent<CharacterAnimation>();
             
-            // chance the character will have a runing anim
-            cAnim.runningAnim = Random.value < 0.5f;
+        //     // chance the character will have a runing anim
+        //     cAnim.runningAnim = Random.value < 0.5f;
 
-            CharacterMovement cMov = character.GetComponent<CharacterMovement>();
+        //     CharacterMovement cMov = character.GetComponent<CharacterMovement>();
            
-            // chance the character will have a wheelchair
-            cMov.playerOnWheelchair = Random.value < 0.1f;
+        //     // chance the character will have a wheelchair
+        //     cMov.playerOnWheelchair = Random.value < 0.1f;
             
-            // random speed
-            cMov.movementSpeed = cMov.CompareTag("Player") ? 80 : 65;
+        //     // random speed
+        //     cMov.movementSpeed = cMov.CompareTag("Player") ? 80 : 65;
             
-            // Make everyone an NPC first
-            character.tag = "NPC";
-            character.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
-            character.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "NPCCollider";
+        //     // Make everyone an NPC first
+        //     character.tag = "NPC";
+        //     character.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+        //     character.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "NPCCollider";
 
-            npcs.Add(character);
-        }
+        //     npcs.Add(character);
+        // }
 
 
-        // Pick one of the characters to be the Player
-        player =
-            allCharacters[Random.Range(0, allCharacters.Count)];
+        // // Pick one of the characters to be the Player
+        // player =
+        //     allCharacters[Random.Range(0, allCharacters.Count)];
 
-        player.tag = "Player";
+        // player.tag = "Player";
 
-        player.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
-        player.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "PlayerCollider";
+        // player.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
+        // player.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "PlayerCollider";
 
-        npcs.Remove(player);
+        // npcs.Remove(player);
     }
 
     void Start()
@@ -145,7 +148,8 @@ public class RoundScript : MonoBehaviour
 　
         // RemixAndStartRound();
 
-        StartCoroutine(RouletteCharacters());
+        startButton.SetActive(true);
+        okButton.SetActive(false);
 
 
         
@@ -170,7 +174,7 @@ public class RoundScript : MonoBehaviour
             else if(!platformTrackTrainScript.departureAwaiting)
             {
                 // if(Input.GetKey(KeyCode.W))
-                // RemixAndStartRound();  
+                platformTrackTrainScript.StartDeparture(Random.value < 0.5f);
                 timeLeft = 25f;              
             }
         }
@@ -227,13 +231,13 @@ public class RoundScript : MonoBehaviour
     //     // the character the camera stops on will be the player's character for the round
     //     //  
     // }
+    public void InitiateRoulette()
+    {
+        StartCoroutine(RouletteCharacters());
+    }
 
     public IEnumerator RouletteCharacters()
     {
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
         // Disable Start button
         startButton.SetActive(false);
 
@@ -241,6 +245,7 @@ public class RoundScript : MonoBehaviour
         List<GameObject> rouletteCharacters =
             new List<GameObject>(allCharacters);
 
+        GameObject character = null; 
         // Make sure the camera starts somewhere sensible
         // Camera cam = Camera.main;
 
@@ -255,21 +260,24 @@ public class RoundScript : MonoBehaviour
             float t = Mathf.Clamp01(elapsedTime / rouletteTime);
 
             // This controls how long we stay on each character
-            float interval = Mathf.Lerp(0.15f, 1f, t);
+            float interval = Mathf.Lerp(0.05f, 0.5f, t);
 
-            foreach(GameObject characterzero in rouletteCharacters)
-            {
-                // SetSpritesAlpha(
-                //     character.GetComponent<CharacterAnimation>().characterSpriteList,
-                //     character.GetComponent<CharacterAnimation>().initialChrctrColorList);
-            }
+            // foreach(GameObject characterzero in rouletteCharacters)
+            // {
+            //     SetSpritesAlpha(
+            //         characterzero.GetComponent<CharacterAnimation>().characterSpriteList,
+            //         characterzero.GetComponent<CharacterAnimation>().initialChrctrColorList,
+            //         0f);
+            // }
+            if(character != null)
+            character.transform.position = new Vector3(600,0,0);
 
             // Pick a random character
-            GameObject character =
+            character =
                 rouletteCharacters[
                     Random.Range(0, rouletteCharacters.Count)
                 ];
-
+            
             // -------------------------
             // CHANGE CHARACTER APPEARANCE
             // -------------------------
@@ -280,30 +288,40 @@ public class RoundScript : MonoBehaviour
                 character
                     .GetComponent<CharacterCustomization>()
                     .UpdateRandom();
-            }
-            else
-            {
-                // ApplySharedHueShift(GetHueRemixGroup()); 
-                // SetSpritesAlpha(character, 0f);
-                SetSpritesAlpha(
-                    character.GetComponent<CharacterAnimation>().characterSpriteList,
-                    character.GetComponent<CharacterAnimation>().initialChrctrColorList);
-            }
+                
+                // character
+                //     .GetComponent<CharacterAnimation>()
+                //     .ResetColorList(
+                //         character,
+                //         character.GetComponent<CharacterAnimation>().characterSpriteList,
+                //         character.GetComponent<CharacterAnimation>().initialChrctrColorList
+                //     );
 
-            
+            }
+            // else
+            // {
+            //     // ApplySharedHueShift(GetHueRemixGroup()); 
+            //     // SetSpritesAlpha(character, 0f);
+               
+            // }
+
+            // SetSpritesAlpha(
+            //     character.GetComponent<CharacterAnimation>().characterSpriteList,
+            //     character.GetComponent<CharacterAnimation>().initialChrctrColorList,
+            //     1f, true);
 
             // Vector3 origPos = character.transform.localPosition;
             // Vector3 newPos = character.transform.localPosition + new Vector3(0,-5,0);
             // character.transform.localPosition = newPos;
             
-            
+            character.transform.position = new Vector3(0,0,0);
 
 
             // -------------------------
             // MOVE CAMERA TO CHARACTER
             // -------------------------
-            cam.target = character.transform;
-            cam.targetPosition = character.transform.localPosition;
+            // cam.target = character.transform;
+            // cam.targetPosition = character.transform.localPosition;
             
 
             // Vector3 cameraPosition =
@@ -317,70 +335,61 @@ public class RoundScript : MonoBehaviour
 
             // Wait before next character
             yield return new WaitForSeconds(interval);
+            
+            elapsedTime += interval;
+            player = character;
         }
 
         // -------------------------
         // FINAL CHARACTER
         // -------------------------
 
-        GameObject selectedCharacter =
-            rouletteCharacters[
-                Random.Range(0, rouletteCharacters.Count)
-            ];
 
-        player = selectedCharacter;
+
+        foreach (GameObject characterPick in allCharacters)
+        {
+            CharacterAnimation cAnim = characterPick.GetComponent<CharacterAnimation>();
+            
+            // chance the character will have a runing anim
+            cAnim.runningAnim = Random.value < 0.5f;
+
+            CharacterMovement cMov = characterPick.GetComponent<CharacterMovement>();
+           
+            // chance the character will have a wheelchair
+            cMov.playerOnWheelchair = Random.value < 0.1f;
+            
+            // random speed
+            cMov.movementSpeed = cMov.CompareTag("Player") ? 80 : 65;
+            
+            // Make everyone an NPC first
+            characterPick.tag = "NPC";
+            characterPick.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+            characterPick.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "NPCCollider";
+            characterPick.layer = LayerMask.NameToLayer("NPC");
+            npcs.Add(characterPick);
+        }  
 
         player.tag = "Player";
 
         player.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
         player.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "PlayerCollider";
+        player.layer = LayerMask.NameToLayer("Player");
 
         npcs.Remove(player);
-
-        selectedCharacter.tag = "Player";
 
         // -------------------------
         // SHOW RESULT / OK BUTTON
         // -------------------------
 
-        // okButton.SetActive(true);
+        okButton.SetActive(true);
+        yield return null;
     }
 
-    void RemixAndStartRound()
+    public void RemixAndStartRound()
     {
-        // ChooseCharacterTypes();
-        // SetRelationships();
-        
-        // foreach (GameObject character in allCharacters)
-        // {
-        //     CharacterAnimation cAnim = character.GetComponent<CharacterAnimation>();
-            
-        //     // chance the character will have a runing anim
-        //     cAnim.runningAnim = Random.value < 0.5f;
+        okButton.SetActive(false);
 
-        //     CharacterMovement cMov = character.GetComponent<CharacterMovement>();
-           
-        //     // chance the character will have a wheelchair
-        //     cMov.playerOnWheelchair = Random.value < 0.1f;
-            
-        //     // random speed
-        //     cMov.movementSpeed = cMov.CompareTag("Player") ? 80 : 65;
-            
-        //     // Make everyone an NPC first
-        //     character.tag = "NPC";
-        //     character.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
-        //     character.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "NPCCollider";
-        // }
-
-
-        // // Pick one of the characters to be the Player
-        // player =
-        //     allCharacters[Random.Range(0, allCharacters.Count)];
-
-        // player.tag = "Player";
-
-        // player.GetComponentInChildren<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
-        // player.GetComponentInChildren<BoxCollider2D>().gameObject.tag = "PlayerCollider";
+        gameHasStarted = true;
 
         
         ApplyBackgroundHueShift();
@@ -433,7 +442,14 @@ public class RoundScript : MonoBehaviour
                 break;
         }   
 
-        ApplySharedHueShift(GetHueRemixGroup());
+        // ApplySharedHueShift(GetHueRemixGroup());
+        foreach(GameObject npc in npcs)
+        {
+            SetSpritesAlpha(
+                    npc.GetComponent<CharacterAnimation>().characterSpriteList,
+                    npc.GetComponent<CharacterAnimation>().initialChrctrColorList,
+                    1f, true);
+        }
 
 
         if (cam != null)
@@ -656,19 +672,18 @@ public class RoundScript : MonoBehaviour
         camera.backgroundColor =
             Color.HSVToRGB(h, s, v);
     }
-    private void SetSpritesAlpha(
-        List<GameObject> list,
-        List<Color> colList)
+    private void SetSpritesAlpha(List<SpriteRenderer> list, List<Color> colorList, float alpha, bool restoreOriginal = false)
     {
-        foreach (GameObject obj in list)
+        for (int i = 0; i < list.Count; i++)
         {
-            SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
-            if(sr == null)
+            SpriteRenderer sr = list[i];
+
+            if (sr == null)
                 continue;
 
             Color colour = sr.color;
 
-            colour.a = colList.a;
+            colour.a = restoreOriginal ? colorList[i].a : alpha;
 
             sr.color = colour;
         }

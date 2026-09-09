@@ -24,11 +24,12 @@ public class CameraMovement : MonoBehaviour
     public Texture2D cursorTexture; // Assign your PNG in the Inspector
     public Vector2 hotSpot = Vector2.zero; // Hotspot of the cursor (can be adjusted)
 
+    [HideInInspector] RoundScript roundScript;
     [HideInInspector] string initialMotionDirection = null;
 
     void Awake()
     {
-
+        roundScript = FindFirstObjectByType<RoundScript>();
         // // Remove all disabled LevelThreshColliderScript components
         // LevelThreshColliderScript[] levelColliders = FindObjectsOfType<LevelThreshColliderScript>(true);
         // foreach (var comp in levelColliders)
@@ -152,8 +153,9 @@ public class CameraMovement : MonoBehaviour
 
     void LateUpdate() // handle the nature of the camera following player
     {
-        targetPosition = new Vector3(target.position.x + 7, target.position.y - 12, transform.position.z);
-        if (!freezeCamPos)
+        // targetPosition = new Vector3(target.position.x + 7, target.position.y - 12, transform.position.z);
+        targetPosition = new Vector3(target.position.x, target.position.y, transform.position.z);
+        if (roundScript.gameHasStarted)
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, smoothing * Time.deltaTime);
         }

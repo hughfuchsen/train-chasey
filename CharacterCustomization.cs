@@ -1804,7 +1804,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor1()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1822,7 +1822,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor2()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1840,7 +1840,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor3()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1858,7 +1858,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor4()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1876,7 +1876,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor5()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1894,7 +1894,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor6()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1912,7 +1912,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor7()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1930,7 +1930,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor8()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1948,7 +1948,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor9()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1966,7 +1966,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairColor10()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -1986,7 +1986,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle1()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2014,7 +2014,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle2()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2044,7 +2044,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle3()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2074,7 +2074,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle4()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2103,7 +2103,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle5()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2131,7 +2131,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle6()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2159,7 +2159,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle7()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2187,7 +2187,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHairStyle8()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2214,7 +2214,7 @@ public class CharacterCustomization : MonoBehaviour
     }
     public void SetHairStyle9()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2241,7 +2241,7 @@ public class CharacterCustomization : MonoBehaviour
     }
     public void SetHairStyle10()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2269,7 +2269,7 @@ public class CharacterCustomization : MonoBehaviour
     }
     public void SetHairStyle11()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2296,7 +2296,7 @@ public class CharacterCustomization : MonoBehaviour
     }
     public void SetHairStyle12()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2323,7 +2323,7 @@ public class CharacterCustomization : MonoBehaviour
     }
     public void SetHairStyle13()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2342,7 +2342,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetNoHat()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)
@@ -2365,7 +2365,7 @@ public class CharacterCustomization : MonoBehaviour
 
     public void SetHat1()
     {
-        Transform hair = characterAnimation.transform.Find("xFlip/headParent/hair");
+        Transform hair = characterAnimation.transform.Find("xFlip/hair");
         if (hair != null)
         {
             foreach (Transform child in hair)

@@ -194,16 +194,18 @@ public class NPCPathFollower : MonoBehaviour
 
         while (true)
         {
-            GridNodeData bestNode = GetBestNode();
-
-            if (bestNode != null &&
-                bestNode != currentGoal)
+            if(roundScript.gameHasStarted)
             {
-                currentGoal = bestNode;
+                GridNodeData bestNode = GetBestNode();
 
-                SetTargetNode(bestNode, false);
+                if (bestNode != null &&
+                    bestNode != currentGoal)
+                {
+                    currentGoal = bestNode;
+
+                    SetTargetNode(bestNode, false);
+                }
             }
-
 
             yield return new WaitForSeconds(thinkInterval);
         }

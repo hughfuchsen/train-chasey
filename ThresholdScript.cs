@@ -36,7 +36,6 @@ public class ThresholdScript : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     { 
             if(!other.GetComponent<BoxCollider2D>()) return;
-
             CharacterMovement cm = other.GetComponentInParent<CharacterMovement>();
             GameObject character = cm.gameObject;
 
@@ -53,165 +52,165 @@ public class ThresholdScript : MonoBehaviour
             StopAllCoros();
 
  
-            cm.motionDirection = "normal";
+            // cm.motionDirection = "normal";
 
-            if(!ptts.departureAwaiting)
-            {
-                if(characterCrossingLeft) 
-                {
-                    cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
-                    cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
+            // if(!ptts.departureAwaiting)
+            // {
+            //     if(characterCrossingLeft) 
+            //     {
+            //         cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
+            //         cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
 
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
-                }
-                else if (!characterCrossingLeft)
-                {
-                    cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
-                    cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
+            //         cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.UpLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
+            //         cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
+            //         cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
+            //         cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
+            //         cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
+            //     }
+            //     else if (!characterCrossingLeft)
+            //     {
+            //         cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
+            //         cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
 
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpRight;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpRight;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpRight;
+            //         cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpRight;
+            //         cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.UpRight;
+            //         cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
+            //         cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
                     
-                }
-            }
-            else
-            {
-                if(characterCrossingLeft) 
-                {
-                    cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
-                    cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
+            //     }
+            // }
+            // else
+            // {
+            //     // if(characterCrossingLeft) 
+            //     // {
+            //     //     cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
+            //     //     cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
 
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
-                }
-                else if (!characterCrossingLeft)
-                {
-                    cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
-                    cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
+            //     //     cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
+            //     // }
+            //     // else if (!characterCrossingLeft)
+            //     // {
+            //     //     cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
+            //     //     cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
                     
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
-                }
-            }
+            //     //     cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
+            //     //     cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
+            //     // }
+            // }
     }
-    void OnTriggerStay2D(Collider2D other)
-    { 
-            if(!other.GetComponent<BoxCollider2D>()) return;
+    // void OnTriggerStay2D(Collider2D other)
+    // { 
+    //         if(!other.GetComponent<BoxCollider2D>()) return;
 
-            CharacterMovement cm = other.GetComponentInParent<CharacterMovement>();
-            GameObject character = cm.gameObject;
+    //         CharacterMovement cm = other.GetComponentInParent<CharacterMovement>();
+    //         GameObject character = cm.gameObject;
 
-            cm.currentArea = AreaType.train;
+    //         cm.currentArea = AreaType.train;
             
-            cm.characterOnThresh = true;
+    //         cm.characterOnThresh = true;
 
-            cm.motionDirection = "normal";
+    //         // cm.motionDirection = "normal";
 
-            if(!ptts.departureAwaiting)
-            {
-                if(characterCrossingLeft) 
-                {
-                    cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
-                    cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
+    //         // if(!ptts.departureAwaiting)
+    //         // {
+    //         //     if(characterCrossingLeft) 
+    //         //     {
+    //         //         cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
+    //         //         cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
 
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
-                }
-                else if (!characterCrossingLeft)
-                {
-                    cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
-                    cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
+    //         //         cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.UpLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
+    //         //     }
+    //         //     else if (!characterCrossingLeft)
+    //         //     {
+    //                 cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
+    //         //         cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
 
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.UpRight;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.UpRight;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.UpRight;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.UpRight;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.UpRight;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.UpRight;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
+    //         //         cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
                     
-                }
-            }
-            else
-            {
-                if(characterCrossingLeft) 
-                {
-                    cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
-                    cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
+    //         //     }
+    //         // }
+    //         // else
+    //         // {
+    //         //     // if(characterCrossingLeft) 
+    //         //     // {
+    //         //     //     cm.fixedDirectionLeftDiagonal = true; // fix the player in \ left diag way while inside the collider
+    //         //     //     cm.fixedDirectionRightDiagonal = false; // fix the player in \ left diag way while inside the collider
 
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
-                }
-                else if (!characterCrossingLeft)
-                {
-                    cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
-                    cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.RightDown;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.RightDown;
+    //         //     // }
+    //         //     // else if (!characterCrossingLeft)
+    //         //     // {
+    //         //     //     cm.fixedDirectionRightDiagonal = true; // fix the player in / right diag way while inside the collider
+    //         //     //     cm.fixedDirectionLeftDiagonal = false; // fix the player in / right diag way while inside the collider
                     
-                    cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
-                    cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
-                }
-            }
-    }
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.Left] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpLeft] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingLeft] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpFacingRight] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.UpRight] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.Right] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.RightDown] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingRight] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.DownFacingLeft] = Direction.DownLeft;
+    //         //     //     cm.controlDirectionToPlayerDirection[Direction.DownLeft] = Direction.DownLeft;
+    //         //     // }
+    //         // }
+    // }
 
     void OnTriggerExit2D(Collider2D other)
     {
@@ -226,18 +225,20 @@ public class ThresholdScript : MonoBehaviour
         
         cm.characterOnThresh = false;
 
-        cm.fixedDirectionLeftDiagonal = false;
-        cm.fixedDirectionRightDiagonal = false; // un-fix the player in \/ left/right diag way upon collider exit. 
+        // cm.fixedDirectionLeftDiagonal = false;
+        // cm.fixedDirectionRightDiagonal = false; // un-fix the player in \/ left/right diag way upon collider exit. 
         cm.ResetPlayerMovement(); 
 
             //ON EXIT CROSSING UP
-        if (IsCrossingUp(cm))
+        if (IsCrossingUp(cm) || IsCrossingRight(cm))
         {           
             cm.previousArea = AreaType.train;
             cm.currentArea = AreaType.platform;
             // ptts.CharacterEnterArea(character);
         }  
-        else //ON EXIT CROSSING DOWN
+        else 
+        // if (!IsCrossingUp(cm) || !IsCrossingRight(cm)) 
+        //ON EXIT CROSSING DOWN
         {
            
             cm.previousArea = AreaType.platform;
@@ -248,6 +249,10 @@ public class ThresholdScript : MonoBehaviour
         aboveColliderByCharacter.Remove(other.gameObject);
     }
     private bool IsCrossingUp(CharacterMovement cm)
+    {
+        return cm.change.y > 0;
+    }
+    private bool IsCrossingRight(CharacterMovement cm)
     {
         return cm.change.y > 0;
     }

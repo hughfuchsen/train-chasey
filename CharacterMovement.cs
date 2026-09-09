@@ -514,7 +514,7 @@ public class CharacterMovement : MonoBehaviour
         } // Up
 
 
-        if (activeCollisions.Count > 0 && !characterOnThresh) {
+        if (activeCollisions.Count > 0) {
           controlDirection = HandleQuadrantContact(controlDirection, currentContactQuadrant);
         }
 

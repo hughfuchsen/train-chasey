@@ -161,6 +161,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
     private void Awake()
     {
         trigger.isTrigger = false;
+        trigger.tag = "Untagged";
 
         plaformsAndTrackInitialPos =
             plaformsAndTrack.transform.localPosition;
@@ -176,11 +177,11 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
         player = GameObject.FindGameObjectWithTag("Player");
 
-        // characterList.Add(pig);
-        // characterList.Add(person);
-        // characterList.Add(pony);
-        // characterList.Add(puppy);
-        // characterList.Add(chicken);
+        characterList.Add(pig);
+        characterList.Add(person);
+        characterList.Add(pony);
+        characterList.Add(puppy);
+        characterList.Add(chicken);
     }
 
 
@@ -266,8 +267,13 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
     public void StartDeparture(bool moveUpLeft)
     {
+        player = GameObject.FindGameObjectWithTag("Player");
+
         CharacterMovement cm = player.GetComponent<CharacterMovement>();
         GridGenerator gridGenerator = GameObject.FindObjectOfType<GridGenerator>();
+        // characterList.Clear();
+        // characterList = null;
+        // characterList = roundScript.npcs;
 
         // --------------------------------------------------------
         // DON'T MAKE A DEPARTURE DECISION WHILE IN THRESHOLD
@@ -453,7 +459,8 @@ public class PlatformTrackTrainScript : MonoBehaviour
                 Mathf.Clamp01(
                     elapsedTime / timeToReachTarget
                 );
-
+            // Smooth acceleration and deceleration
+            float curvedT = Mathf.SmoothStep(0f, 1f, t);
 
             // ----------------------------------------------------
             // PLATFORM
@@ -463,7 +470,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
                 Vector3.Lerp(
                     plaformsAndTrackInitialPos,
                     target,
-                    t
+                    curvedT
                 );
 
 
@@ -485,7 +492,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
             
 
             MoveCharactersWithArea(
-                t,
+                curvedT,
                 characterList,
                 AreaType.platform,
                 displacement,
@@ -553,6 +560,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         }
 
         trigger.isTrigger = true;
+        trigger.tag = "Trigger";
 
         plaformsAndTrack.transform.localPosition =
             plaformsAndTrackInitialPos;
@@ -613,13 +621,14 @@ public class PlatformTrackTrainScript : MonoBehaviour
                 Mathf.Clamp01(
                     elapsedTime / timeToReachTarget
                 );
-
+            // Smooth acceleration and deceleration
+            float curvedT = Mathf.SmoothStep(0f, 1f, t);
 
             trains.transform.localPosition =
                 Vector3.Lerp(
                     trainsInitialPosition,
                     trainTarget,
-                    t
+                    curvedT
                 );
 
         // ----------------------------------------------------
@@ -627,7 +636,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         // ----------------------------------------------------
 
             MoveCharactersWithArea(
-                t,
+                curvedT,
                 characterList,
                 AreaType.train,
                 displacement,
@@ -689,6 +698,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         }
         
         trigger.isTrigger = true;
+        trigger.tag = "Trigger";
         
         trains.transform.localPosition =
             trainsInitialPosition;
@@ -851,7 +861,8 @@ public class PlatformTrackTrainScript : MonoBehaviour
     public void PrepareStartTrainState()
     {
         trigger.isTrigger = false;
-        
+        trigger.tag = "Untagged";
+
         TrainNumber previousTrainNumber = currentTrainNumber;
 
         do
@@ -895,6 +906,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
     public void PrepareTrainState()
     {
         trigger.isTrigger = false;
+        trigger.tag = "Untagged";
         
         previousTrainSpriteObjList = currentTrainSpriteObjList;
         // currentPlatformSpriteObjList.Clear();

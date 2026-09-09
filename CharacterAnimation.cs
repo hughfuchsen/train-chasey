@@ -19,7 +19,7 @@ public class CharacterAnimation : MonoBehaviour
 
     public bool runningAnim;
 
-    public List<GameObject> characterSpriteList = new List<GameObject>();
+    public List<SpriteRenderer> characterSpriteList = new List<SpriteRenderer>();
     public List<Vector3> initialChrctrSpriteTransformList = new List<Vector3>();
     [HideInInspector] public List<GameObject> zeroInitialAlphaSpriteList = new List<GameObject>();
     [HideInInspector] public List<Color> initialChrctrColorList = new List<Color>();
@@ -166,9 +166,8 @@ public class CharacterAnimation : MonoBehaviour
     }
 
     void Start()
-    {
+    {        
         lateStartUpdateCharacterDataCoro = StartCoroutine(LateStartUpdateCharacterData());
-
     }
 
     IEnumerator LateStartUpdateCharacterData()
@@ -176,7 +175,7 @@ public class CharacterAnimation : MonoBehaviour
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
 
-        GetSpritesAndAddToLists(this.gameObject, characterSpriteList, new List<GameObject>(), initialChrctrColorList, initialChrctrSpriteTransformList);
+        GetSpritesAndAddToLists(this.gameObject, characterSpriteList, initialChrctrColorList);
         LoadCharacter();
     }
 
@@ -234,7 +233,6 @@ public class CharacterAnimation : MonoBehaviour
             if(characterType == "person")
             {
                 characterCustomization.UpdateRandom();
-                
             }   
             
         // }
@@ -290,8 +288,8 @@ public class CharacterAnimation : MonoBehaviour
         allBikeSprites = Resources.LoadAll<Sprite>("bike");
         allWheelchairSprites = Resources.LoadAll<Sprite>("wheelChair");
 
-        headSprite = transform.Find("xFlip/headParent/head").GetComponent<SpriteRenderer>();
-        eyeSprite = transform.Find("xFlip/headParent/eyes").GetComponent<SpriteRenderer>();
+        headSprite = transform.Find("xFlip/head").GetComponent<SpriteRenderer>();
+        eyeSprite = transform.Find("xFlip/eyes").GetComponent<SpriteRenderer>();
         throatSprite = transform.Find("xFlip/throat").GetComponent<SpriteRenderer>();
         collarSprite = transform.Find("xFlip/collar").GetComponent<SpriteRenderer>();
         torsoSprite = transform.Find("xFlip/torso").GetComponent<SpriteRenderer>();
@@ -305,23 +303,23 @@ public class CharacterAnimation : MonoBehaviour
         longSleeveSprite = transform.Find("xFlip/longSleeve").GetComponent<SpriteRenderer>();
         handSprite = transform.Find("xFlip/hands").GetComponent<SpriteRenderer>();
         shortSleeveSprite = transform.Find("xFlip/shortSleeve").GetComponent<SpriteRenderer>();
-        hat1TopSprite = transform.Find("xFlip/headParent/hair").transform.Find("hat1Top").GetComponent<SpriteRenderer>();
-        mohawk5TopSprite = transform.Find("xFlip/headParent/hair").transform.Find("mohawk5Top").GetComponent<SpriteRenderer>();
-        mohawk5BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("mohawk5Bottom").GetComponent<SpriteRenderer>();
-        hair0TopSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair0Top").GetComponent<SpriteRenderer>();
-        hair0BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair0Bottom").GetComponent<SpriteRenderer>();
-        hair1TopSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair1Top").GetComponent<SpriteRenderer>();
-        hair7TopSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair7Top").GetComponent<SpriteRenderer>();
-        hair8TopSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair8Top").GetComponent<SpriteRenderer>();
-        hair1BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair1Bottom").GetComponent<SpriteRenderer>();
-        hair2BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair2Bottom").GetComponent<SpriteRenderer>();
-        hair3BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair3Bottom").GetComponent<SpriteRenderer>();
-        hair4BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair4Bottom").GetComponent<SpriteRenderer>();
-        hair6BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair6Bottom").GetComponent<SpriteRenderer>();
-        hair7BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair7Bottom").GetComponent<SpriteRenderer>();
-        hair8BottomSprite = transform.Find("xFlip/headParent/hair").transform.Find("hair8Bottom").GetComponent<SpriteRenderer>();
-        hairFringe1Sprite = transform.Find("xFlip/headParent/hair").transform.Find("hairFringe1").GetComponent<SpriteRenderer>();
-        hairFringe2Sprite = transform.Find("xFlip/headParent/hair").transform.Find("hairFringe2").GetComponent<SpriteRenderer>();
+        hat1TopSprite = transform.Find("xFlip/hair").transform.Find("hat1Top").GetComponent<SpriteRenderer>();
+        mohawk5TopSprite = transform.Find("xFlip/hair").transform.Find("mohawk5Top").GetComponent<SpriteRenderer>();
+        mohawk5BottomSprite = transform.Find("xFlip/hair").transform.Find("mohawk5Bottom").GetComponent<SpriteRenderer>();
+        hair0TopSprite = transform.Find("xFlip/hair").transform.Find("hair0Top").GetComponent<SpriteRenderer>();
+        hair0BottomSprite = transform.Find("xFlip/hair").transform.Find("hair0Bottom").GetComponent<SpriteRenderer>();
+        hair1TopSprite = transform.Find("xFlip/hair").transform.Find("hair1Top").GetComponent<SpriteRenderer>();
+        hair7TopSprite = transform.Find("xFlip/hair").transform.Find("hair7Top").GetComponent<SpriteRenderer>();
+        hair8TopSprite = transform.Find("xFlip/hair").transform.Find("hair8Top").GetComponent<SpriteRenderer>();
+        hair1BottomSprite = transform.Find("xFlip/hair").transform.Find("hair1Bottom").GetComponent<SpriteRenderer>();
+        hair2BottomSprite = transform.Find("xFlip/hair").transform.Find("hair2Bottom").GetComponent<SpriteRenderer>();
+        hair3BottomSprite = transform.Find("xFlip/hair").transform.Find("hair3Bottom").GetComponent<SpriteRenderer>();
+        hair4BottomSprite = transform.Find("xFlip/hair").transform.Find("hair4Bottom").GetComponent<SpriteRenderer>();
+        hair6BottomSprite = transform.Find("xFlip/hair").transform.Find("hair6Bottom").GetComponent<SpriteRenderer>();
+        hair7BottomSprite = transform.Find("xFlip/hair").transform.Find("hair7Bottom").GetComponent<SpriteRenderer>();
+        hair8BottomSprite = transform.Find("xFlip/hair").transform.Find("hair8Bottom").GetComponent<SpriteRenderer>();
+        hairFringe1Sprite = transform.Find("xFlip/hair").transform.Find("hairFringe1").GetComponent<SpriteRenderer>();
+        hairFringe2Sprite = transform.Find("xFlip/hair").transform.Find("hairFringe2").GetComponent<SpriteRenderer>();
         bikeSprite = transform.Find("xFlip/bike").GetComponent<SpriteRenderer>();
         wheelchairBackSprite = transform.Find("xFlip/wheelchairBack").GetComponent<SpriteRenderer>();
         wheelchairFrontSprite = transform.Find("xFlip/wheelchairFront").GetComponent<SpriteRenderer>();
@@ -382,7 +380,7 @@ public class CharacterAnimation : MonoBehaviour
         currentSkinColor = (HexToColor("#000000"));
         headSprite.color = currentSkinColor;
         eyeSprite.color = (HexToColor("#000000"));
-        currentHairColor = HexToColor("#4E342E");
+        currentHairColor = HexToColor("#000000");
         currentHatColor = (HexToColor("#000000"));
         currentShirtColor = (HexToColor("#000000"));
         currentPantsColor = (HexToColor("#000000"));
@@ -401,10 +399,8 @@ public class CharacterAnimation : MonoBehaviour
         // wheelchairFrontSprite.color.a = currentWheelVehicleColor;
         // wheelchairWheelSprite.color.a = currentWheelVehicleColor;
 
-        foreach(GameObject obj in characterSpriteList)
+        foreach(SpriteRenderer sr in characterSpriteList)
         {
-            SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
-
             if(((sr.CompareTag("Wheelchair")) && !characterMovement.playerOnWheelchair) || sr.name.Contains("bike"))
             {
                 sr.color = new Color(
@@ -1189,44 +1185,68 @@ public class CharacterAnimation : MonoBehaviour
         }
     }
 
-    public void GetSpritesAndAddToLists(GameObject obj, List<GameObject> spriteList, List<GameObject> excludeList, List<Color> colorList, List<Vector3> transformList)
+    // public void GetSpritesAndAddToLists(GameObject obj, List<GameObject> spriteList, List<GameObject> excludeList, List<Color> colorList, List<Vector3> transformList)
+    // {
+    //     // Clear the lists before repopulating
+    //     spriteList.Clear();
+    //     colorList.Clear();
+
+    //     Stack<GameObject> stack = new Stack<GameObject>();
+    //     stack.Push(obj);
+
+    //     while (stack.Count > 0)
+    //     {
+    //         GameObject currentNode = stack.Pop();
+    //         SpriteRenderer sr = currentNode.GetComponent<SpriteRenderer>();
+    //         Transform tr = currentNode.GetComponent<Transform>();
+
+    //         if (sr != null)
+    //         {
+    //             Color col = sr.color;
+    //             spriteList.Add(currentNode);
+    //             colorList.Add(col);
+    //             transformList.Add(tr.localPosition);
+    //         }
+
+    //         foreach (Transform child in currentNode.transform)
+    //         {
+    //             if (!excludeList.Contains(child.gameObject))
+    //             {
+    //                 stack.Push(child.gameObject);
+    //             }
+    //         }
+    //     }
+    // }
+    public void GetSpritesAndAddToLists(GameObject obj, List<SpriteRenderer> spriteList, List<Color> colorList)
     {
         // Clear the lists before repopulating
         spriteList.Clear();
         colorList.Clear();
 
-        Stack<GameObject> stack = new Stack<GameObject>();
-        stack.Push(obj);
-
-        while (stack.Count > 0)
+        spriteList.AddRange(obj.GetComponentsInChildren<SpriteRenderer>());
+        // Store their original colours
+        foreach (SpriteRenderer sr in spriteList)
         {
-            GameObject currentNode = stack.Pop();
-            SpriteRenderer sr = currentNode.GetComponent<SpriteRenderer>();
-            Transform tr = currentNode.GetComponent<Transform>();
+            colorList.Add(sr.color);
+        } 
+    }
+    public void ResetColorList(GameObject obj, List<SpriteRenderer> spriteList, List<Color> colorList)
+    {
+        // Clear the lists before repopulating
+        colorList.Clear();
 
-            if (sr != null)
-            {
-                Color col = sr.color;
-                spriteList.Add(currentNode);
-                colorList.Add(col);
-                transformList.Add(tr.localPosition);
-            }
-
-            foreach (Transform child in currentNode.transform)
-            {
-                if (!excludeList.Contains(child.gameObject))
-                {
-                    stack.Push(child.gameObject);
-                }
-            }
-        }
+        // Store colours
+        foreach (SpriteRenderer sr in spriteList)
+        {
+            colorList.Add(sr.color);
+        } 
     }
 
     public void initializeCharacterSprites()
     {
         for (int i = 0; i < characterSpriteList.Count; i++)
         {
-            characterSpriteList[i].GetComponent<SpriteRenderer>().color = initialChrctrColorList[i];
+            characterSpriteList[i].color = initialChrctrColorList[i];
         }
     }
 
