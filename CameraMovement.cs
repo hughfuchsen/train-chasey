@@ -14,7 +14,7 @@ public class CameraMovement : MonoBehaviour
 
     private float[] zoomLevels = { 60f, 110f, 160f, 210f, 265f }; // Array of zoom levels
     private int currentZoomLevelIndex = 2; // Keep track of the current zoom level
-    private float zoomSize; // The current zoom size
+    public float zoomSize; // The current zoom size
 
     private bool isZoomingIn = true;
 
@@ -70,7 +70,7 @@ public class CameraMovement : MonoBehaviour
     void Update()
     {
         // Check if Y button is pressed
-        if (Input.GetKeyDown(KeyCode.JoystickButton3)) // Y button on Xbox controller
+        if (Input.GetKeyDown(KeyCode.Z)) // Y button on Xbox controller
         {
             IncrementZoom();
         }
@@ -154,7 +154,14 @@ public class CameraMovement : MonoBehaviour
     void LateUpdate() // handle the nature of the camera following player
     {
         // targetPosition = new Vector3(target.position.x + 7, target.position.y - 12, transform.position.z);
-        targetPosition = new Vector3(target.position.x, target.position.y, transform.position.z);
+        if(target != null)
+        {
+            targetPosition = new Vector3(target.position.x, target.position.y, transform.position.z);
+        }
+        else
+        {
+            targetPosition = transform.position;
+        }
         if (roundScript.gameHasStarted)
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, smoothing * Time.deltaTime);

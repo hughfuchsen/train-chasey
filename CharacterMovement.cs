@@ -28,16 +28,20 @@ public enum ContactQuadrant
   BottomRight, // 3
   None
 }
- 
+
 public class CharacterMovement : MonoBehaviour
 { 
+
+  RoundScript roundScript;
   CharacterAnimation characterAnimation;
+  NPCPathFollower pf;
   CharacterCustomization characterCustomization;
   public int movementSpeed = 65;
   [HideInInspector] public int initialmovementSpeed = 65;
   [HideInInspector] public Rigidbody2D rb; 
 
   [HideInInspector] public BoxCollider2D boxCollider;
+  [HideInInspector] public bool onDangerZoneBit = false;
 
  public string motionDirection = "normal";
   [HideInInspector] public Vector3 change;
@@ -69,7 +73,7 @@ public class CharacterMovement : MonoBehaviour
 
   [HideInInspector] public bool playerIsCustomizing = false;
   [HideInInspector] public bool playerOnFurniture = false;
-  [HideInInspector] public bool playerTouchingCollider = false;
+  [HideInInspector] public bool playerTouchingDoorCol = false;
 
 
   [HideInInspector] public TMP_InputField[] inputFields;
@@ -77,6 +81,7 @@ public class CharacterMovement : MonoBehaviour
 
   // Variable to store the contact quadrant
   [HideInInspector] public ContactQuadrant currentContactQuadrant;
+  [HideInInspector] public ContactQuadrant chachedContactQuadrant;
 
   // Map the angle to control directions
   public Direction controlDirection = Direction.Nothing; // Default value should never be used
@@ -109,9 +114,13 @@ public class CharacterMovement : MonoBehaviour
       characterAnimation = GetComponent<CharacterAnimation>();
       characterCustomization = GetComponent<CharacterCustomization>();
 
+      roundScript = FindObjectOfType<RoundScript>();
+
       initialPosition = GetComponent<Transform>().position;
       movementSpeed = 65;
       initialmovementSpeed = movementSpeed;
+
+      pf = GetComponent<NPCPathFollower>();
       
       // if (CompareTag("Player"))
       // {
@@ -150,6 +159,11 @@ public class CharacterMovement : MonoBehaviour
         HandleMovementReactivation();
       }
       // Debug.Log("Facing Left:" + facingLeft);
+      //   if(onDangerZoneBit && characterOnThresh)
+      // {
+      //   Debug.Log("swidfas");
+      // }
+      Debug.Log(activeCollisions.Count);
     }
     
   }
@@ -157,16 +171,34 @@ public class CharacterMovement : MonoBehaviour
     {
       // if(this.gameObject.tag == "Player")
       // {
-        MoveCharacter(); 
+      //   Debug.Log(playerTouchingDoorCol);
       // }
+      if(!roundScript.noControls)
+      MoveCharacter(); 
     }
 
-
+  public bool initializing;
   public void MoveCharacter()
   {
+    // if(this.gameObject == roundScript.player)
+    // {
+      
+    // }
+
       // get user inputs
     if(this.gameObject.tag == "Player")
     {
+
+      // if (initializing)
+      // {
+      //   return;
+      // }
+        // if (initializing)
+        // {
+        //   return;
+        // }
+      
+      
       change = Vector3.zero;
 
       if (IsInputFieldFocused() || playerOnFurniture)
@@ -195,6 +227,12 @@ public class CharacterMovement : MonoBehaviour
 
     if(change != Vector3.zero)
       {
+        // if(this.gameObject.tag == "Player")
+        // {
+        //   pf.dir = change;
+        //   // return;
+        // }
+
         if(motionDirection == "normal") 
         {
           MoveCharacterNormalDirection();
@@ -513,10 +551,22 @@ public class CharacterMovement : MonoBehaviour
           controlDirection = Direction.UpFacingRight;
         } // Up
 
-
-        if (activeCollisions.Count > 0) {
-          controlDirection = HandleQuadrantContact(controlDirection, currentContactQuadrant);
-        }
+        
+        
+          if (activeCollisions.Count > 0) 
+          {
+            // if(roundScript.aboutToDepart)
+            // {
+            //   chachedContactQuadrant = currentContactQuadrant;
+            //   // currentContactQuadrant = ContactQuadrant.None;
+            //   controlDirection = Direction.Nothing;
+            // }
+            // else {
+              controlDirection = HandleQuadrantContact(controlDirection, currentContactQuadrant);
+            // }
+          }
+        
+        
 
         // Map control directions to player directions and animations
         UpdateCharacterDirection(controlDirection);
@@ -559,13 +609,16 @@ public class CharacterMovement : MonoBehaviour
         else if (angle > 225f && angle <= 270f) { change = new Vector3(1f,-0.5f,0f); characterAnimation.currentAnimationDirection = characterAnimation.rightAnim; facingLeft = false; } // Inverted left to right
 
         // Handle animation and movement
+        // if(roundScript.inTransit)
+        //   change = Vector3.zero;
+
         characterAnimation.Animate(characterAnimation.movementStartIndex, characterAnimation.movementFrameCount, characterAnimation.currentAnimationDirection, characterAnimation.bodyTypeNumber);
         rb.MovePosition(rb.position + (Vector2)change * movementSpeed * Time.deltaTime);
         // rb.MovePosition(transform.position + change * movementSpeed * Time.deltaTime);
     }
   } 
 
-  private Direction HandleQuadrantContact(Direction controlDirection, ContactQuadrant contactQuadrant)
+  public Direction HandleQuadrantContact(Direction controlDirection, ContactQuadrant contactQuadrant)
   {
      if (controlDirection == Direction.UpFacingRight && contactQuadrant == ContactQuadrant.TopLeft)
      {
@@ -630,6 +683,10 @@ public class CharacterMovement : MonoBehaviour
      else if(controlDirection == Direction.UpFacingLeft && currentContactQuadrant == ContactQuadrant.TopRight)
      {
       return Direction.UpLeft;
+     }
+     else if(currentContactQuadrant == ContactQuadrant.None)
+     {
+      return Direction.Nothing;
      }
 
     return controlDirection; // Keeps the same direction if no condition is met
@@ -727,18 +784,7 @@ public class CharacterMovement : MonoBehaviour
   {
     if (gameObject.CompareTag("Player"))
     {
-        HandleCollisionAndGrabbingQuadrants(collision);
-    }
-    else if (gameObject.CompareTag("NPC"))
-    {
-        if (Random.value < 0.5f)
-        {
-            ReverseDirection(false);
-        }
-        else
-        {
-            HandleCollisionAndGrabbingQuadrants(collision);
-        }
+      HandleCollisionAndGrabbingQuadrants(collision);
     }
   }
 
@@ -747,6 +793,15 @@ public class CharacterMovement : MonoBehaviour
       if (this.gameObject.CompareTag("Player"))
       {
           activeCollisions.Remove(collision.collider);
+
+        foreach (var col in activeCollisions.ToList())
+        {
+            if (col == null || !col.gameObject.activeInHierarchy)
+            {
+                activeCollisions.Remove(col);
+            }
+        }
+
 
           if (activeCollisions.Count > 0)
           {
@@ -767,6 +822,8 @@ public class CharacterMovement : MonoBehaviour
                   currentContactQuadrant = DetermineContactQuadrant(localNewContactPoint, localCenter);
               }
           }
+          else
+          {ResetPlayerMovement();}
       }
   }
 

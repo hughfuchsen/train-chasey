@@ -3,6 +3,8 @@ using UnityEngine;
 // [ExecuteAlways]
 public class GridGenerator : MonoBehaviour
 {
+    private readonly Collider2D[] overlapResults = new Collider2D[20];
+
     [Header("Grid Settings")]
     public int width = 20;
     public int height = 20;
@@ -64,10 +66,82 @@ public class GridGenerator : MonoBehaviour
     // NODE VIABILITY
     // =========================================================
 
+    // public void UpdateNodeViability()
+    // {
+    //     // int levelLayer = character.layer;
+
+    //     for (int x = 0; x < width; x++)
+    //     {
+    //         for (int y = 0; y < height; y++)
+    //         {
+    //             GridNodeData node = nodes[x, y];
+
+    //             if (node == null)
+    //                 continue;
+
+    //             Collider2D[] hits =
+    //                 Physics2D.OverlapCircleAll(
+    //                     node.worldPos,
+    //                     tileHeight
+    //                 );
+
+    //             bool blocked = false;
+
+    //             foreach (var hit in hits)
+    //             {
+    //                 if (hit == null)
+    //                     continue;
+
+    //                 // Ignore thresholds
+    //                 // if (
+    //                 //     hit.GetComponent<RoomThresholdColliderScript>() != null ||
+    //                 //     hit.GetComponent<LevelThreshColliderScript>() != null ||
+    //                 //     hit.GetComponent<BuildingThreshColliderScript>() != null
+    //                 // )
+    //                 // {
+    //                 //     continue;
+    //                 // }
+    //                 if (hit.CompareTag("TrainAnchor"))
+    //                     node.isTrain = true;
+                    
+    //                 if (hit.CompareTag("PlatformAnchor"))
+    //                     node.isPlatform = true;
+
+    //                 // Ignore characters
+    //                 if (
+    //                     hit.CompareTag("PlayerCollider") ||
+    //                     hit.CompareTag("NPCCollider") ||
+    //                     hit.CompareTag("Player") ||
+    //                     hit.CompareTag("NPC") ||
+    //                     hit.CompareTag("Passable") ||
+    //                     hit.CompareTag("TrainAnchor") ||
+    //                     hit.CompareTag("PlatformAnchor")
+    //                 )
+    //                 {
+    //                     continue;
+    //                 }
+
+                    
+
+    //                 // Wrong layer
+    //                 // if (hit.gameObject.layer != levelLayer)
+    //                 //     continue;
+
+    //                 blocked = true;
+    //                 break;
+    //             }
+
+    //             node.isBlocked = blocked;
+    //         }
+    //     }
+    // }
+
+    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private LayerMask trainLayer;
+    [SerializeField] private LayerMask platformLayer;
+
     public void UpdateNodeViability()
     {
-        // int levelLayer = character.layer;
-
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -77,53 +151,29 @@ public class GridGenerator : MonoBehaviour
                 if (node == null)
                     continue;
 
-                Collider2D[] hits =
-                    Physics2D.OverlapCircleAll(
+                node.isBlocked =
+                    Physics2D.OverlapCircleNonAlloc(
                         node.worldPos,
-                        tileHeight
-                    );
+                        tileHeight,
+                        overlapResults,
+                        obstacleLayer
+                    ) > 0;
 
-                bool blocked = false;
+                node.isTrain =
+                    Physics2D.OverlapCircleNonAlloc(
+                        node.worldPos,
+                        tileHeight,
+                        overlapResults,
+                        trainLayer
+                    ) > 0;
 
-                foreach (var hit in hits)
-                {
-                    if (hit == null)
-                        continue;
-
-                    // Ignore thresholds
-                    // if (
-                    //     hit.GetComponent<RoomThresholdColliderScript>() != null ||
-                    //     hit.GetComponent<LevelThreshColliderScript>() != null ||
-                    //     hit.GetComponent<BuildingThreshColliderScript>() != null
-                    // )
-                    // {
-                    //     continue;
-                    // }
-
-                    // Ignore characters
-                    if (
-                        hit.CompareTag("PlayerCollider") ||
-                        hit.CompareTag("NPCCollider") ||
-                        hit.CompareTag("NPC") ||
-                        hit.CompareTag("Trigger")
-                    )
-                    {
-                        continue;
-                    }
-
-                    // Ignore triggers
-                    if (hit.isTrigger)
-                        continue;
-
-                    // Wrong layer
-                    // if (hit.gameObject.layer != levelLayer)
-                    //     continue;
-
-                    blocked = true;
-                    break;
-                }
-
-                node.isBlocked = blocked;
+                node.isPlatform =
+                    Physics2D.OverlapCircleNonAlloc(
+                        node.worldPos,
+                        tileHeight,
+                        overlapResults,
+                        platformLayer
+                    ) > 0;
             }
         }
     }
@@ -180,4 +230,6 @@ public class GridNodeData
     public Vector2Int gridPos;
     public Vector3 worldPos;
     public bool isBlocked;
+    public bool isTrain;
+    public bool isPlatform;
 }

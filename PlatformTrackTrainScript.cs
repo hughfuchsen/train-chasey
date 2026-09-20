@@ -32,7 +32,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
     // BARRIER
     // ============================================================
 
-    public BoxCollider2D trigger;
+    public GameObject doorCol;
 
     // ============================================================
     // MOVEMENT SETTINGS
@@ -61,10 +61,15 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
     [SerializeField]
     private Vector3 trainsInitialPosition;
+    private Vector3 trainOuterInitialPos;
+    private Vector3 trainOuterFinalPos;
 
     [SerializeField] GameObject train1Colliders;
     [SerializeField] GameObject train2Colliders;
     [SerializeField] GameObject train3Colliders;
+    [SerializeField] GameObject train1Outer;
+    [SerializeField] GameObject train2Outer;
+    [SerializeField] GameObject train3Outer;
 
     public List<GameObject> train1ListForSettingAlphas =
         new List<GameObject>();
@@ -152,6 +157,8 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
     [HideInInspector]
     public Coroutine currentTrainMotionCoroutine;
+    [HideInInspector]
+    public Coroutine trainInfrontLerpCoro;
 
 
     // ============================================================
@@ -160,8 +167,8 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
     private void Awake()
     {
-        trigger.isTrigger = false;
-        trigger.tag = "Untagged";
+        // doorCol.isTrigger = false;
+        doorCol.tag = "Untagged";
 
         plaformsAndTrackInitialPos =
             plaformsAndTrack.transform.localPosition;
@@ -182,6 +189,9 @@ public class PlatformTrackTrainScript : MonoBehaviour
         characterList.Add(pony);
         characterList.Add(puppy);
         characterList.Add(chicken);
+
+        trainOuterInitialPos = train1Outer.transform.position - new Vector3(0,700,0);
+        trainOuterFinalPos = train1Outer.transform.position + new Vector3(0,700,0);
     }
 
 
@@ -189,19 +199,25 @@ public class PlatformTrackTrainScript : MonoBehaviour
     {
         // characters start in train for now
 
-        SetSpritesAlpha(
-            allPlatformSprites,
-            0f
-        );
+        // SetSpritesAlpha(
+        //     allPlatformSprites,
+        //     0f
+        // );
+
+        PrepareStartPlatformState();
+
         SetSpritesAlpha(
             trains,
             0f
         );
         characterList = roundScript.npcs;
 
-        PrepareStartTrainState();
+        // PrepareTrainState();
         
         GridGenerator gridGenerator = GameObject.FindObjectOfType<GridGenerator>();
+
+        doorCol.SetActive(true);
+        
 
         gridGenerator.UpdateNodeViability();
 
@@ -210,25 +226,25 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
     private void Update()
     {        
-        if (!departureAwaiting)
-            return;
+        // if (!departureAwaiting)
+        //     return;
 
 
-        if (player == null)
-            return;
+        // if (player == null)
+        //     return;
 
-        CharacterMovement cm = player.GetComponent<CharacterMovement>();
+        // CharacterMovement cm = player.GetComponent<CharacterMovement>();
 
-        if (cm == null)
-            return;
+        // if (cm == null)
+        //     return;
 
         // Threshold crossing has finished
-        if (!cm.characterOnThresh)
-        {
-            departureAwaiting = false;
+        // if (!cm.characterOnThresh)
+        // {
+        //     departureAwaiting = false;
 
-            StartDeparture(Random.value < 0.5f);
-        }
+        //     StartDeparture(Random.value < 0.5f);
+        // }
     }
 
 
@@ -274,29 +290,30 @@ public class PlatformTrackTrainScript : MonoBehaviour
         // characterList.Clear();
         // characterList = null;
         // characterList = roundScript.npcs;
-
+        // doorCol.isTrigger = false;
+        doorCol.tag = "Untagged";
         // --------------------------------------------------------
         // DON'T MAKE A DEPARTURE DECISION WHILE IN THRESHOLD
         // --------------------------------------------------------
 
-        if (cm.characterOnThresh)
-        {
-            Debug.Log("Player is currently crossing a threshold. Departure awaiting.");
+        // if (cm.characterOnThresh)
+        // {
+        //     Debug.Log("Player is currently crossing a threshold. Departure awaiting.");
 
-            departureAwaiting = true;
-            return;
-        }
+        //     departureAwaiting = true;
+        //     return;
+        // }
 
         // --------------------------------------------------------
         // PLAYER WAS WAITING AND HAS NOW LEFT THRESHOLD
         // --------------------------------------------------------
 
-        if (departureAwaiting)
-        {
-            departureAwaiting = false;
+        // if (departureAwaiting)
+        // {
+        //     departureAwaiting = false;
 
-            Debug.Log("Threshold crossed. Departure proceeding.");
-        }
+        //     Debug.Log("Threshold crossed. Departure proceeding.");
+        // }
 
         
         // --------------------------------------------------------
@@ -305,7 +322,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
         if (cm.currentArea == AreaType.train)
         {
-            PrepareStartPlatformState();
+            // PreparePlatformState(moveUpLeft);
             // gridGenerator.UpdateNodeViability();
             MovePlatformAndTrack(moveUpLeft);
         }
@@ -324,20 +341,21 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
 
 
-        for (int i = 0; i < characterList.Count; i++)
-        {
-            if (characterList[i] == null)
-                continue;
+        // for (int i = 0; i < characterList.Count; i++)
+        // {
+        //     if (characterList[i] == null)
+        //         continue;
 
             
 
-            NPCPathFollower pf =
-            characterList[i].GetComponent<NPCPathFollower>();
+        //     NPCPathFollower pf =
+        //     characterList[i].GetComponent<NPCPathFollower>();
 
-            pf.ResetForNewRound();
-        }
+        //     pf.ResetForNewRound();
+        // }
         
-        
+        // doorCol.SetActive(true);
+
         gridGenerator.UpdateNodeViability();
 
 
@@ -382,14 +400,74 @@ public class PlatformTrackTrainScript : MonoBehaviour
         bool moveUpLeft
     )
     {
-        if(previousPlatformSpriteObjList != null)
+        previousPlatformSpriteObjList = currentPlatformSpriteObjList;
+        currentPlatformSpriteObjList = null;
+        
+        PlatformNumber previousPlatformNumber = currentPlatformNumber;
+
+        CharacterMovement pcm = player.GetComponent<CharacterMovement>();
+
+        do
         {
-            foreach (GameObject platform in previousPlatformSpriteObjList)
+            currentPlatformNumber = (PlatformNumber)Random.Range(
+                0,
+                System.Enum.GetValues(typeof(PlatformNumber)).Length
+            );
+        }
+        while (currentPlatformNumber == previousPlatformNumber);
+
+
+        platform1Colliders.SetActive(false);
+        platform2Colliders.SetActive(false);
+        platform3Colliders.SetActive(false);
+
+        // currentPlatformSpriteObjList.Clear();
+
+        switch (currentPlatformNumber)
+        {
+            case PlatformNumber.platform1:
+                currentPlatformSpriteObjList = platform1ListForSettingAlphas;
+                platform1Colliders.SetActive(true);
+                break;
+
+            case PlatformNumber.platform2:
+                currentPlatformSpriteObjList = platform2ListForSettingAlphas;
+                platform2Colliders.SetActive(true);
+                // platform1Colliders.SetActive(true);
+
+                break;
+
+            case PlatformNumber.platform3:
+                currentPlatformSpriteObjList = platform3ListForSettingAlphas;
+                platform3Colliders.SetActive(true);
+                // platform1Colliders.SetActive(true);
+
+                break;
+        }
+
+
+
+
+
+        foreach (GameObject platform in platform1ListForSettingAlphas)
+        {
+            if (!platform.CompareTag("MiddlePlatformParent"))
             {
-                if (!platform.transform.parent.CompareTag("MiddlePlatformParent"))
-                {
-                    SetSpritesAlpha(platform, 0f);
-                }
+            SetSpritesAlpha(platform, 0f);
+            }
+        }
+        foreach (GameObject platform in platform2ListForSettingAlphas)
+        {
+            if (!platform.CompareTag("MiddlePlatformParent"))
+            {
+            SetSpritesAlpha(platform, 0f);
+            }
+        }
+        foreach (GameObject platform in platform3ListForSettingAlphas)
+        {
+            if (!platform.CompareTag("MiddlePlatformParent"))
+            {
+            SetSpritesAlpha(platform, 0f);
             }
         }
 
@@ -397,14 +475,29 @@ public class PlatformTrackTrainScript : MonoBehaviour
         {
             foreach (GameObject platform in currentPlatformSpriteObjList)
             {
-                if (!platform.transform.parent.CompareTag("MiddlePlatformParent"))
+                if (!platform.CompareTag("MiddlePlatformParent"))
                 {
-                    SetSpritesAlpha(platform, 1f);
+                SetSpritesAlpha(platform, 1f);
+                }
+            }
+        }
+        if(previousPlatformSpriteObjList != null)
+        {
+            foreach (GameObject platform in previousPlatformSpriteObjList)
+            {
+                if (platform.CompareTag("MiddlePlatformParent"))
+                {
+                SetSpritesAlpha(platform, 1f);
+                }
+                else
+                {
+                    SetSpritesAlpha(platform, 0f);
                 }
             }
         }
 
-
+    
+        
         Vector3 displacement =
             GetMovementDisplacement(moveUpLeft);
 
@@ -450,15 +543,26 @@ public class PlatformTrackTrainScript : MonoBehaviour
         // --------------------------------------------------------
         // MOVE
         // --------------------------------------------------------
+        bool platformSpritesHaveSwapped = false;
+
+        if(trainInfrontLerpCoro == null)
+        {
+            trainInfrontLerpCoro = StartCoroutine(TrainInFrontLerp(train1Outer, false));
+        } 
+
+        yield return new WaitForSeconds(1.5f);
+        
+        roundScript.SwitchMusicTrack();
+
 
         while (elapsedTime < timeToReachTarget)
         {
             elapsedTime += Time.deltaTime;
 
-            float t =
-                Mathf.Clamp01(
-                    elapsedTime / timeToReachTarget
-                );
+            float t = Mathf.Clamp01(
+                elapsedTime / timeToReachTarget
+            );
+
             // Smooth acceleration and deceleration
             float curvedT = Mathf.SmoothStep(0f, 1f, t);
 
@@ -473,23 +577,9 @@ public class PlatformTrackTrainScript : MonoBehaviour
                     curvedT
                 );
 
-
-            // ----------------------------------------------------
-            // TRACK
-            // ----------------------------------------------------
-
-            // currentTrack.transform.localPosition =
-            //     Vector3.Lerp(
-            //         trackStart,
-            //         trackTarget,
-            //         t
-            //     );
-
-
             // ----------------------------------------------------
             // CHARACTERS
             // ----------------------------------------------------
-            
 
             MoveCharactersWithArea(
                 curvedT,
@@ -499,11 +589,12 @@ public class PlatformTrackTrainScript : MonoBehaviour
                 initialCharacterPositions,
                 moveUpLeft,
                 ref charactersHaveJumped
-             );
+            );
+
 
             yield return null;
         }
-
+        
 
         // --------------------------------------------------------
         // FINAL POSITIONS
@@ -519,27 +610,42 @@ public class PlatformTrackTrainScript : MonoBehaviour
         // --------------------------------------------------------
         // RECYCLE PLATFORM + TRACK
         // --------------------------------------------------------
-
-        if(previousPlatformSpriteObjList != null)
+        
+        
+        foreach (GameObject platform in platform1ListForSettingAlphas)
         {
-            foreach (GameObject platform in previousPlatformSpriteObjList)
-            {
-                if (platform.transform.parent.CompareTag("MiddlePlatformParent"))
-                {
-                    SetSpritesAlpha(platform, 0f);
-                }
-            }
+            // if (!platform.CompareTag("MiddlePlatformParent"))
+            // {
+            SetSpritesAlpha(platform, 0f);
+            // }
         }
+        foreach (GameObject platform in platform2ListForSettingAlphas)
+        {
+            // if (!platform.CompareTag("MiddlePlatformParent"))
+            // {
+            SetSpritesAlpha(platform, 0f);
+            // }
+        }
+        foreach (GameObject platform in platform3ListForSettingAlphas)
+        {
+            // if (!platform.CompareTag("MiddlePlatformParent"))
+            // {
+            SetSpritesAlpha(platform, 0f);
+            // }
+        }
+
+
         if(currentPlatformSpriteObjList != null)
         {
             foreach (GameObject platform in currentPlatformSpriteObjList)
             {
-                if (platform.transform.parent.CompareTag("MiddlePlatformParent"))
+                if (platform.CompareTag("MiddlePlatformParent"))
                 {
-                    SetSpritesAlpha(platform, 1f);
+                SetSpritesAlpha(platform, 1f);
                 }
             }
         }
+        
 
         for (int i = 0; i < characterList.Count; i++)
         {
@@ -559,12 +665,34 @@ public class PlatformTrackTrainScript : MonoBehaviour
             }
         }
 
-        trigger.isTrigger = true;
-        trigger.tag = "Trigger";
+        // doorCol.isTrigger = true;
+        // doorCol.tag = "Passable";
 
         plaformsAndTrack.transform.localPosition =
             plaformsAndTrackInitialPos;
         
+        
+        doorCol.SetActive(false);
+
+        if(pcm.playerTouchingDoorCol)
+        pcm.activeCollisions.Clear();
+
+        
+        GridGenerator gridGenerator = GameObject.FindObjectOfType<GridGenerator>();
+        roundScript.inTransit = false;
+        roundScript.timeLeft = 15f;
+        roundScript.waitCoro = null;
+        roundScript.gameHasStarted = true;
+
+
+        if(trainInfrontLerpCoro == null)
+        {
+            trainInfrontLerpCoro = StartCoroutine(TrainInFrontLerp(train1Outer, true));
+        } 
+
+        yield return new WaitForSeconds(1.5f); 
+
+        gridGenerator.UpdateNodeViability();
         currentPlatformTrackMotionCoroutine = null;
 
     }
@@ -578,6 +706,8 @@ public class PlatformTrackTrainScript : MonoBehaviour
         bool moveUpLeft
     )
     {
+        CharacterMovement pcm = player.GetComponent<CharacterMovement>();
+
         Vector3 displacement =
             GetMovementDisplacement(moveUpLeft);
 
@@ -613,15 +743,24 @@ public class PlatformTrackTrainScript : MonoBehaviour
         float elapsedTime = 0f;
 
 
+        bool spritesHaveSwapped = false;
+
+
+        if(trainInfrontLerpCoro == null)
+        {
+            trainInfrontLerpCoro = StartCoroutine(TrainInFrontLerp(train1Outer, false));
+        } 
+        yield return new WaitForSeconds(1.5f);
+
+
         while (elapsedTime < timeToReachTarget)
         {
             elapsedTime += Time.deltaTime;
 
-            float t =
-                Mathf.Clamp01(
-                    elapsedTime / timeToReachTarget
-                );
-            // Smooth acceleration and deceleration
+            float t = Mathf.Clamp01(
+                elapsedTime / timeToReachTarget
+            );
+
             float curvedT = Mathf.SmoothStep(0f, 1f, t);
 
             trains.transform.localPosition =
@@ -630,10 +769,6 @@ public class PlatformTrackTrainScript : MonoBehaviour
                     trainTarget,
                     curvedT
                 );
-
-        // ----------------------------------------------------
-        // CHARACTERS
-        // ----------------------------------------------------
 
             MoveCharactersWithArea(
                 curvedT,
@@ -645,12 +780,39 @@ public class PlatformTrackTrainScript : MonoBehaviour
                 ref charactersHaveJumped
             );
 
+            // if (t >= 0.5f && !spritesHaveSwapped)
+            // {
+            //     spritesHaveSwapped = true;
+
+            //     if (previousTrainSpriteObjList != null)
+            //     {
+            //         foreach (GameObject train in previousTrainSpriteObjList)
+            //         {
+            //             if (train.CompareTag("MiddleTrainParent"))
+            //             {
+            //                 SetSpritesAlpha(train, 0f);
+            //             }
+            //         }
+            //     }
+
+            //     if (currentTrainSpriteObjList != null)
+            //     {
+            //         foreach (GameObject train in currentTrainSpriteObjList)
+            //         {
+            //             if (train.CompareTag("MiddleTrainParent"))
+            //             {
+            //                 SetSpritesAlpha(train, 1f);
+            //             }
+            //         }
+            //     }
+            // }
+
             yield return null;
         }
 
-
         trains.transform.localPosition =
             trainTarget;
+        
 
 
         // --------------------------------------------------------
@@ -661,7 +823,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         {
             foreach (GameObject train in previousTrainSpriteObjList)
             {
-                // if (train.transform.parent.CompareTag("MiddleTrainParent"))
+                // if (train.CompareTag("MiddleTrainParent"))
                 // {
                     SetSpritesAlpha(train, 0f);
                 // }
@@ -672,7 +834,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         {
             foreach (GameObject train in currentTrainSpriteObjList)
             {
-                // if (train.transform.parent.CompareTag("MiddleTrainParent"))
+                // if (train.CompareTag("MiddleTrainParent"))
                 // {
                     SetSpritesAlpha(train, 1f);
                 // }
@@ -697,14 +859,84 @@ public class PlatformTrackTrainScript : MonoBehaviour
             }
         }
         
-        trigger.isTrigger = true;
-        trigger.tag = "Trigger";
+        // doorCol.isTrigger = true;
+        // doorCol.tag = "Passable";
         
         trains.transform.localPosition =
             trainsInitialPosition;
 
+
+        doorCol.SetActive(false);
+
+        if(pcm.playerTouchingDoorCol)
+        pcm.activeCollisions.Clear();
+
+        roundScript.inTransit = false;
+        roundScript.timeLeft = 15f;
+        roundScript.waitCoro = null;
+        roundScript.gameHasStarted = true;
+        GridGenerator gridGenerator = GameObject.FindObjectOfType<GridGenerator>();
+
+        foreach(GameObject character in characterList)
+        {
+            NPCPathFollower pf = character.GetComponent<NPCPathFollower>();
+            pf.ResetForNewRound();
+        }
+
+        if(trainInfrontLerpCoro == null)
+        {
+            trainInfrontLerpCoro = StartCoroutine(TrainInFrontLerp(train1Outer, true));
+        } 
+
+        yield return new WaitForSeconds(1.5f); 
+        
+
+        gridGenerator.UpdateNodeViability();
         currentTrainMotionCoroutine = null;
 
+    }
+
+    private IEnumerator TrainInFrontLerp(GameObject trainOuter, bool moveUp)
+    {
+        float elapsedTime = 0f;
+        float duration = 1f;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+
+            float t = Mathf.Clamp01(
+                elapsedTime / duration
+            );
+
+            // float curvedT = Mathf.SmoothStep(0f, 1f, t);
+
+            // trainOuter.transform.localPosition =
+            trainOuter.transform.position =
+                moveUp ?
+                Vector3.Lerp(
+                    trainOuterInitialPos,
+                    trainOuterFinalPos,
+                    t
+                ) :
+                Vector3.Lerp(
+                    trainOuterFinalPos,
+                    trainOuterInitialPos,
+                    t
+                ) ;
+
+
+            yield return null;
+        }
+      
+        // trainOuter.transform.localPosition =
+        trainOuter.transform.position =
+            moveUp ?
+            trainOuterFinalPos :
+            trainOuterInitialPos;
+
+
+        trainInfrontLerpCoro = null;
+            yield return null;
     }
 
 
@@ -797,12 +1029,10 @@ public class PlatformTrackTrainScript : MonoBehaviour
 
     public void PrepareStartPlatformState()
     {
-        trigger.isTrigger = false;
-
-        previousPlatformSpriteObjList = currentPlatformSpriteObjList;
+       previousPlatformSpriteObjList = currentPlatformSpriteObjList;
+        currentPlatformSpriteObjList = null;
+        
         PlatformNumber previousPlatformNumber = currentPlatformNumber;
-
-        CharacterMovement cm = player.GetComponent<CharacterMovement>();
 
         do
         {
@@ -817,6 +1047,8 @@ public class PlatformTrackTrainScript : MonoBehaviour
         platform1Colliders.SetActive(false);
         platform2Colliders.SetActive(false);
         platform3Colliders.SetActive(false);
+
+        // currentPlatformSpriteObjList.Clear();
 
         switch (currentPlatformNumber)
         {
@@ -840,73 +1072,180 @@ public class PlatformTrackTrainScript : MonoBehaviour
                 break;
         }
 
-        foreach (GameObject platform in currentPlatformSpriteObjList)
-        {
-            if (platform.transform.parent.CompareTag("MiddlePlatformParent"))
-            {
-                SetSpritesAlpha(platform, 0f);
-            }
-            else
-            {
-                SetSpritesAlpha(platform, 1f);
-            }
 
+
+
+
+        foreach (GameObject platform in platform1ListForSettingAlphas)
+        {
+            // if (!platform.CompareTag("MiddlePlatformParent"))
+            // {
+            SetSpritesAlpha(platform, 0f);
+            // }
+        }
+        foreach (GameObject platform in platform2ListForSettingAlphas)
+        {
+            // if (!platform.CompareTag("MiddlePlatformParent"))
+            // {
+            SetSpritesAlpha(platform, 0f);
+            // }
+        }
+        foreach (GameObject platform in platform3ListForSettingAlphas)
+        {
+            // if (!platform.CompareTag("MiddlePlatformParent"))
+            // {
+            SetSpritesAlpha(platform, 0f);
+            // }
         }
 
+        if(currentPlatformSpriteObjList != null)
+        {
+            foreach (GameObject platform in currentPlatformSpriteObjList)
+            {
+                if (platform.CompareTag("MiddlePlatformParent"))
+                {
+                SetSpritesAlpha(platform, 1f);
+                }
+            }
+        }
+    }
+
+
+    public void PreparePlatformState(bool moveUpLeft)
+    {
+        if(previousPlatformSpriteObjList != null)
+        {
+            // previousPlatformSpriteObjList.Clear();
+            previousPlatformSpriteObjList = null;
+        }
+        previousPlatformSpriteObjList = currentPlatformSpriteObjList;
+        // currentPlatformSpriteObjList.Clear();
+        currentPlatformSpriteObjList = null;
+        
+        PlatformNumber previousPlatformNumber = currentPlatformNumber;
+
+        CharacterMovement cm = player.GetComponent<CharacterMovement>();
+
+        do
+        {
+            currentPlatformNumber = (PlatformNumber)Random.Range(
+                0,
+                System.Enum.GetValues(typeof(PlatformNumber)).Length
+            );
+        }
+        while (currentPlatformNumber == previousPlatformNumber);
+
+
+        platform1Colliders.SetActive(false);
+        platform2Colliders.SetActive(false);
+        platform3Colliders.SetActive(false);
+
+        // currentPlatformSpriteObjList.Clear();
+
+        switch (currentPlatformNumber)
+        {
+            case PlatformNumber.platform1:
+                currentPlatformSpriteObjList = platform1ListForSettingAlphas;
+                platform1Colliders.SetActive(true);
+                break;
+
+            case PlatformNumber.platform2:
+                currentPlatformSpriteObjList = platform2ListForSettingAlphas;
+                platform2Colliders.SetActive(true);
+                // platform1Colliders.SetActive(true);
+
+                break;
+
+            case PlatformNumber.platform3:
+                currentPlatformSpriteObjList = platform3ListForSettingAlphas;
+                platform3Colliders.SetActive(true);
+                // platform1Colliders.SetActive(true);
+
+                break;
+        }
+        // if(previousPlatformSpriteObjList != null)
+        // {
+        //     foreach (GameObject platform in previousPlatformSpriteObjList)
+        //     {
+        //         if (platform.CompareTag("MiddlePlatformParent"))
+        //         {
+        //             SetSpritesAlpha(platform, 1f); 
+        //         }
+        //         else
+        //         {
+        //             SetSpritesAlpha(platform, 0f);
+        //         }
+        //     }
+        // }
+
+        // foreach (GameObject platform in currentPlatformSpriteObjList)
+        // {
+        //     if (platform.CompareTag("MiddlePlatformParent"))
+        //     {
+        //         SetSpritesAlpha(platform, 0f); 
+        //     }
+        //     else
+        //     {
+        //         SetSpritesAlpha(platform, 1f);
+        //     }
+        // }
+        // yield return null;
+
+        // MovePlatformAndTrack(moveUpLeft);
     }
    
     // ============================================================
     // TRAIN PREPARATION
     // ============================================================
-    public void PrepareStartTrainState()
-    {
-        trigger.isTrigger = false;
-        trigger.tag = "Untagged";
+    // public void PrepareStartTrainState()
+    // {
+    //     // doorCol.isTrigger = false;
+    //     doorCol.tag = "Untagged";
 
-        TrainNumber previousTrainNumber = currentTrainNumber;
+    //     TrainNumber previousTrainNumber = currentTrainNumber;
 
-        do
-        {
-            currentTrainNumber = (TrainNumber)Random.Range(
-                0,
-                System.Enum.GetValues(typeof(TrainNumber)).Length
-            );
-        }
-        while (currentTrainNumber == previousTrainNumber);
+    //     do
+    //     {
+    //         currentTrainNumber = (TrainNumber)Random.Range(
+    //             0,
+    //             System.Enum.GetValues(typeof(TrainNumber)).Length
+    //         );
+    //     }
+    //     while (currentTrainNumber == previousTrainNumber);
 
 
-        train1Colliders.SetActive(false);
-        train2Colliders.SetActive(false);
-        train3Colliders.SetActive(false);
+    //     train1Colliders.SetActive(false);
+    //     train2Colliders.SetActive(false);
+    //     train3Colliders.SetActive(false);
 
-        switch (currentTrainNumber)
-        {
-            case TrainNumber.train1:
-                currentTrainSpriteObjList = train1ListForSettingAlphas;
-                train1Colliders.SetActive(true);
-                break;
+    //     switch (currentTrainNumber)
+    //     {
+    //         case TrainNumber.train1:
+    //             currentTrainSpriteObjList = train1ListForSettingAlphas;
+    //             train1Colliders.SetActive(true);
+    //             break;
 
-            case TrainNumber.train2:
-                currentTrainSpriteObjList = train2ListForSettingAlphas;
-                train2Colliders.SetActive(true);
-                break;
+    //         case TrainNumber.train2:
+    //             currentTrainSpriteObjList = train2ListForSettingAlphas;
+    //             train2Colliders.SetActive(true);
+    //             break;
 
-            case TrainNumber.train3:
-                currentTrainSpriteObjList = train3ListForSettingAlphas;
-                train3Colliders.SetActive(true);
-                break;
-        }
+    //         case TrainNumber.train3:
+    //             currentTrainSpriteObjList = train3ListForSettingAlphas;
+    //             train3Colliders.SetActive(true);
+    //             break;
+    //     }
 
-        foreach (GameObject trains in currentTrainSpriteObjList)
-        {
-            SetSpritesAlpha(trains, 1f);
-        }
+    //     foreach (GameObject trains in currentTrainSpriteObjList)
+    //     {
+    //         SetSpritesAlpha(trains, 1f);
+    //     }
         
-    }
+    // }
     public void PrepareTrainState()
     {
-        trigger.isTrigger = false;
-        trigger.tag = "Untagged";
+        // doorCol.isTrigger = false;
+        doorCol.tag = "Untagged";
         
         previousTrainSpriteObjList = currentTrainSpriteObjList;
         // currentPlatformSpriteObjList.Clear();
@@ -924,25 +1263,25 @@ public class PlatformTrackTrainScript : MonoBehaviour
         while (currentTrainNumber == previousTrainNumber);
 
 
-        train1Colliders.SetActive(false);
-        train2Colliders.SetActive(false);
-        train3Colliders.SetActive(false);
+        // train1Colliders.SetActive(false);
+        // train2Colliders.SetActive(false);
+        // train3Colliders.SetActive(false);
 
         switch (currentTrainNumber)
         {
             case TrainNumber.train1:
                 currentTrainSpriteObjList = train1ListForSettingAlphas;
-                train1Colliders.SetActive(true);
+                // train1Colliders.SetActive(true);
                 break;
 
             case TrainNumber.train2:
                 currentTrainSpriteObjList = train2ListForSettingAlphas;
-                train2Colliders.SetActive(true);
+                // train1Colliders.SetActive(true);
                 break;
 
             case TrainNumber.train3:
                 currentTrainSpriteObjList = train3ListForSettingAlphas;
-                train3Colliders.SetActive(true);
+                // train1Colliders.SetActive(true);
                 break;
         }
 
@@ -950,7 +1289,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         {
             foreach (GameObject train in previousTrainSpriteObjList)
             {
-                if (train.transform.parent.CompareTag("MiddleTrainParent"))
+                if (train.CompareTag("MiddleTrainParent"))
                 {
                     SetSpritesAlpha(train, 1f);
                 }
@@ -965,7 +1304,7 @@ public class PlatformTrackTrainScript : MonoBehaviour
         {
             foreach (GameObject train in currentTrainSpriteObjList)
             {
-                if (train.transform.parent.CompareTag("MiddleTrainParent"))
+                if (train.CompareTag("MiddleTrainParent") && roundScript.gameHasStarted)
                 {
                     SetSpritesAlpha(train, 0f);
                 }
@@ -983,23 +1322,41 @@ public class PlatformTrackTrainScript : MonoBehaviour
     // PLATFORM VISUALS / COLLIDERS
     // ============================================================
 
-    private void SetSpritesAlpha(
-        GameObject parent,
-        float alpha
-    )
-    {
-        SpriteRenderer[] sprites =
-            parent.GetComponentsInChildren<SpriteRenderer>(
-                true
-            );
+    // private void SetSpritesAlpha(
+    //     GameObject parent,
+    //     float alpha
+    // )
+    // {
+    //     SpriteRenderer[] sprites =
+    //         parent.GetComponentsInChildren<SpriteRenderer>(
+    //             true
+    //         );
 
-        foreach (SpriteRenderer sprite in sprites)
+    //     foreach (SpriteRenderer sprite in sprites)
+    //     {
+    //         Color colour = sprite.color;
+
+    //         colour.a = alpha;
+
+    //         sprite.color = colour;
+    //     }
+    // }
+
+    private void SetSpritesAlpha(GameObject parent, float alpha)
+    {
+        SpriteRenderer sprite = parent.GetComponent<SpriteRenderer>();
+
+        if (sprite != null)
         {
             Color colour = sprite.color;
-
             colour.a = alpha;
-
             sprite.color = colour;
+        }
+
+        foreach (Transform child in parent.transform)
+        {
+            if(!child.CompareTag("TrainsOuter"))
+            SetSpritesAlpha(child.gameObject, alpha);
         }
     }
 

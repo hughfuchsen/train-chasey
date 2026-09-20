@@ -7,12 +7,12 @@ using TMPro;  // This is necessary for using TMP_InputField
 
 public class CharacterAnimation : MonoBehaviour
 {
-    public float xFlipOffset = 15f; //bounds width
+    public float xFlipOffset = 5f; //bounds width
     [HideInInspector] public Bounds bounds; //bounds
-    [SerializeField] Transform visualRoot;
+    public Transform visualRoot;
     [SerializeField] GameObject bodyPartToAnimate;
     [HideInInspector] public Transform bodyPartInitialState;
-    [HideInInspector] public Transform initialState;
+    [HideInInspector] public Vector3 initialState;
     public CharacterType characterType;
     [HideInInspector] public float initialAnimationSpeed;
     public float animationSpeed = 0.08f; // Time between frames
@@ -152,7 +152,7 @@ public class CharacterAnimation : MonoBehaviour
         characterCustomization = GetComponent<CharacterCustomization>();
 
         if (visualRoot != null)
-            initialState = visualRoot.transform;
+            initialState = visualRoot.transform.localPosition;
 
         if (bodyPartToAnimate != null)
             bodyPartInitialState = bodyPartToAnimate.transform;
@@ -1311,17 +1311,18 @@ public class CharacterAnimation : MonoBehaviour
     public void UpdateFlip()
     {
         float x = isFacingLeft ? -1 : 1;
-        float xOffset = isFacingLeft ? initialState.position.x + xFlipOffset : initialState.position.x - xFlipOffset;
+        // float xOffset = isFacingLeft ? xFlipOffset : 0f;
+        float xOffset = 0f;
 
         visualRoot.localScale = new Vector3(
           x,
           visualRoot.localScale.y,
           visualRoot.localScale.z
         );
-        visualRoot.position = new Vector3(
+        visualRoot.localPosition = new Vector3(
           xOffset,
-          visualRoot.position.y,
-          visualRoot.position.z
+          visualRoot.localPosition.y,
+          visualRoot.localPosition.z
         );
     }
 

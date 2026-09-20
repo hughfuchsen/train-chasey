@@ -12,6 +12,9 @@ public class NPCPathFollower : MonoBehaviour
     public GridGenerator gridGenerator;
     public RoundScript roundScript;
 
+    GridNodeData randomTarget;
+
+    public GridNodeData myNode;
 
     // =========================================================
     // AI
@@ -20,6 +23,11 @@ public class NPCPathFollower : MonoBehaviour
     [Header("AI Targets")]
     public Transform prey;
     public Transform predator;
+    [HideInInspector] public Transform initialPredator;
+    [HideInInspector] public Transform initialPrey;
+    [HideInInspector] public bool trainMode = false;
+
+    [HideInInspector] public Vector3 dir = new Vector3(0,0,0);
 
     [Header("AI Weights")]
 
@@ -50,7 +58,7 @@ public class NPCPathFollower : MonoBehaviour
 
     public bool isChasing;
 
-    GridNodeData currentGoal;
+    public GridNodeData currentGoal;
 
     [HideInInspector] public Coroutine goCoroutine;
 
@@ -68,7 +76,7 @@ public class NPCPathFollower : MonoBehaviour
     CharacterAnimation ca;
 
 
-    Coroutine pathFollowCoro;
+    public Coroutine pathFollowCoro;
 
     // =========================================================
     // START
@@ -80,6 +88,11 @@ public class NPCPathFollower : MonoBehaviour
 
         cm = GetComponent<CharacterMovement>();
         ca = GetComponent<CharacterAnimation>();
+
+        initialPredator = predator;
+        initialPrey = prey;
+
+        
     }
     void Start()
     {
@@ -90,16 +103,19 @@ public class NPCPathFollower : MonoBehaviour
 
         lastPosition = transform.position;
 
-        if (goCoroutine == null)
-        {
-            goCoroutine = StartCoroutine(ThinkLoop());
-        }
-    }
+        // PickRandomTarget();
 
+        // if (goCoroutine == null)
+        // {
+        //     goCoroutine = StartCoroutine(ThinkLoop());
+        // }
+    }
+    float randomScore;
+    float randomTargetTimer;
 
     void Update()
     {
-        GridNodeData myNode = GetClosestNode(transform.position);
+        myNode = GetClosestNode(transform.position);
 
         if (myNode != null)
         {
@@ -178,6 +194,14 @@ public class NPCPathFollower : MonoBehaviour
         }
 
         lastPosition = transform.position;
+
+        randomTargetTimer -= Time.deltaTime;
+
+        if (randomTargetTimer <= 0f)
+        {
+            PickRandomTarget();
+            randomTargetTimer = Random.Range(0.1f, 1.5f);
+        }
     }
 
     // =========================================================
@@ -185,91 +209,93 @@ public class NPCPathFollower : MonoBehaviour
     // =========================================================
 
 
-    public IEnumerator ThinkLoop()
+    // public IEnumerator ThinkLoop()
+    // {
+    //     if (CompareTag("Player") && roundScript.playerSettled) yield break;
+
+    //     while (true)
+    //     {
+    //         if(roundScript.gameHasStarted)
+    //         {
+    //             GridNodeData bestNode = GetBestNode();
+
+    //             if (bestNode != null &&
+    //                 bestNode != currentGoal)
+    //             {
+    //                 currentGoal = bestNode;
+
+    //                 SetTargetNode(bestNode, false);
+    //             }
+    //         }
+
+    //         yield return new WaitForSeconds(thinkInterval);
+    //     }
+    // }
+
+    public void SetTrainMode(bool value)
     {
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
-        if (CompareTag("Player")) yield break;
-
-        while (true)
-        {
-            if(roundScript.gameHasStarted)
-            {
-                GridNodeData bestNode = GetBestNode();
-
-                if (bestNode != null &&
-                    bestNode != currentGoal)
-                {
-                    currentGoal = bestNode;
-
-                    SetTargetNode(bestNode, false);
-                }
-            }
-
-            yield return new WaitForSeconds(thinkInterval);
-        }
+        trainMode = value;
     }
-    public void GoToInitialPosition(Vector3 homePos)
-    {
-        if (roundScript == null || roundScript.player == null)
-        {
-            return;
-        }
+    // public void GoToInitialPosition(Vector3 homePos)
+    // {
+    //     if (roundScript == null || roundScript.player == null)
+    //     {
+    //         return;
+    //     }
         
-        GridNodeData homeNode = null;
+    //     GridNodeData homeNode = null;
 
-        if (CompareTag("Player"))
-            return;
+    //     // if (CompareTag("Player"))
+    //     //     return;
 
-        if (goCoroutine != null)
-        {
-            StopCoroutine(goCoroutine);
-            goCoroutine = null;
-        }
-        if(roundScript.player.GetComponent<CharacterMovement>().characterOnThresh)
-        {
-            homeNode =
-            GetClosestNode(homePos + new Vector3(0, -60, 0));
-            roundScript.player.GetComponent<CharacterMovement>().currentArea = AreaType.train;
-        }
-        else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.platform
-                && GetComponent<CharacterMovement>().currentArea == AreaType.platform)
-        {
-            homeNode =
-            GetClosestNode(homePos);
-        }
-        else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.platform
-                && GetComponent<CharacterMovement>().currentArea == AreaType.train)
-        {
-            homeNode =
-            GetClosestNode(homePos);
-        }
-        else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.train
-                && GetComponent<CharacterMovement>().currentArea == AreaType.platform)
-        {
-            homeNode =
-            GetClosestNode(homePos);
-        }
-        else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.train
-                && GetComponent<CharacterMovement>().currentArea == AreaType.train)
-        {
-            homeNode =
-            GetClosestNode(homePos + new Vector3(0, -60, 0));
-        }
-        else
-        {
-            homeNode =
-            GetClosestNode(homePos + new Vector3(0, -60, 0));
-        }
+    //     // if (goCoroutine != null)
+    //     // {
+    //     //     StopCoroutine(goCoroutine);
+    //     //     goCoroutine = null;
+    //     // }
+    //     if(roundScript.player.GetComponent<CharacterMovement>().characterOnThresh)
+    //     {
+    //         homeNode =
+    //         GetClosestNode(homePos);
+    //         roundScript.player.GetComponent<CharacterMovement>().currentArea = AreaType.train;
+    //     }
+    //     else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.platform
+    //             && GetComponent<CharacterMovement>().currentArea == AreaType.platform)
+    //     {
+    //         homeNode =
+    //         GetClosestNode(homePos);
+    //     }
+    //     else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.platform
+    //             && GetComponent<CharacterMovement>().currentArea == AreaType.train)
+    //     {
+    //         homeNode =
+    //         GetClosestNode(homePos);
+    //     }
+    //     else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.train
+    //             && GetComponent<CharacterMovement>().currentArea == AreaType.platform)
+    //     {
+    //         homeNode =
+    //         GetClosestNode(homePos);
+    //     }
+    //     else if (roundScript.player.GetComponent<CharacterMovement>().currentArea == AreaType.train
+    //             && GetComponent<CharacterMovement>().currentArea == AreaType.train)
+    //     {
+    //         homeNode =
+    //         GetClosestNode(homePos + new Vector3(0, -60, 0));
+    //     }
+    //     else
+    //     {
+    //         homeNode =
+    //         GetClosestNode(homePos + new Vector3(0, -60, 0));
+    //     }
 
 
-        if (homeNode != null)
-        {
-            currentGoal = homeNode;
-            SetTargetNode(homeNode, true);
-        }
-    }
+    //     if (homeNode != null)
+    //     {
+    //         currentGoal = homeNode;
+    //         SetTargetNode(homeNode, true);
+    //     }
+    // }
 
 
 
@@ -292,7 +318,6 @@ public class NPCPathFollower : MonoBehaviour
                 if (node == null || node.isBlocked)
                     continue;
 
-                // Only consider nearby nodes
                 float distFromSelf = Vector2Int.Distance(
                     myNode.gridPos,
                     node.gridPos
@@ -311,22 +336,90 @@ public class NPCPathFollower : MonoBehaviour
                     predator.transform.position
                 );
 
-                float score;
+                float score = bestScore;
 
                 if (isChasing)
                 {
-                    // Chasing:
-                    // closer to prey = better
-                    score = -distToPrey;
+                    if (distToPrey < 10f)
+                    {
+                        // Head toward the current random target
+                        if (randomTarget != null)
+                        {
+
+                            score = -Vector3.Distance(
+                                node.worldPos,
+                                randomTarget.worldPos
+                            );
+                        }
+
+                        // Get away from predator
+                        // score = -distToPrey;
+
+                    }
+                    else 
+                    // if (distToPrey >= 250f)
+                    {
+                        // // Head toward the current random target
+                        // if (randomTarget != null)
+                        // {
+                        //     score = -Vector3.Distance(
+                        //         node.worldPos,
+                        //         randomTarget.worldPos
+                        //     );
+                        // }
+                        // Get away from predator
+                        score = -distToPrey;
+                    }
+                    // else
+                    // {
+                    //     // Get away from predator
+                    //     if (randomTarget != null)
+                    //     {
+                    //         score = -Vector3.Distance(
+                    //             node.worldPos,
+                    //             randomTarget.worldPos
+                    //         );
+                    //     }                   
+                    // }
                 }
                 else
                 {
-                    // Escaping:
-                    // further from predator = better
-                    score = distToPredator;
+                    if (distToPredator <= 65f)
+                    {
+                        // Get away from predator
+                        score = distToPredator;
+                    }
+                    else if (distToPredator <= 115f)
+                    {
+                        
+
+                        // Head toward the current random target
+                        if (randomTarget != null)
+                        {
+                            score = -Vector3.Distance(
+                                node.worldPos,
+                                randomTarget.worldPos
+                            );
+                        }
+                    }
+                    else if (distToPredator <= 165f)
+                    {
+                        score = distToPredator;
+                    }
+                    else
+                    {
+                        // Head toward the current random target
+                        if (randomTarget != null)
+                        {
+                            score = -Vector3.Distance(
+                                node.worldPos,
+                                randomTarget.worldPos
+                            );
+                        }
+                    }
                 }
 
-                if (score > bestScore)
+                if (score >= bestScore)
                 {
                     bestScore = score;
                     best = node;
@@ -336,7 +429,160 @@ public class NPCPathFollower : MonoBehaviour
 
         return best;
     }
+    bool gameStart;
+    void PickRandomTarget()
+    {
+        List<GridNodeData> availableNodes = new List<GridNodeData>();
 
+        for (int x = 0; x < gridGenerator.width; x++)
+        {
+            for (int y = 0; y < gridGenerator.height; y++)
+            {
+                GridNodeData node = gridGenerator.nodes[x, y];
+
+                if (node != null && !node.isBlocked)
+                {
+                    availableNodes.Add(node);
+                }
+            }
+        }
+
+        if (availableNodes.Count > 0)
+        {
+            randomTarget = availableNodes[
+                Random.Range(0, availableNodes.Count)
+            ];
+        }
+    }
+
+
+    public IEnumerator ThinkLoop()
+    {
+        while (true)
+        {
+
+            GridNodeData bestNode = null;
+
+            // if ((CompareTag("Player")) && !roundScript.aboutToDepart)
+            // {   
+            //     cm.movementSpeed = cm.initialmovementSpeed;
+            //     goCoroutine = null;
+            //     yield break;
+            // }
+            // if (CompareTag("Player") && trainMode)
+            // {
+            //     bestNode = GetClosestTrainNode();
+            // }
+            // else           
+            if (CompareTag("NPC"))
+            {
+                bestNode = GetBestNode();
+            }
+
+            if(roundScript.playersDontMove)
+            {
+               SetTargetNode(GetClosestNode(transform.position), false); 
+            }
+            else if(roundScript.aboutToDepart == true)
+            {
+               SetTargetNode(currentGoal, true); //initializing
+            }
+            else if (bestNode != null && bestNode != currentGoal && !roundScript.aboutToDepart)
+            {
+                currentGoal = bestNode;
+                SetTargetNode(bestNode, false);
+            }
+           
+            
+
+            if(cm.gameObject.CompareTag("Player") && !cm.initializing)
+            {
+                cm.movementSpeed = cm.initialmovementSpeed;
+                goCoroutine = null;
+                yield break;
+            }
+            
+
+            yield return new WaitForSeconds(thinkInterval);
+        }
+    }
+
+    public GridNodeData GetClosestTrainNode()
+    {
+        GridNodeData myNode = GetClosestNode(transform.position);
+
+        if (myNode == null)
+            return null;
+
+        GridNodeData closest = null;
+        float closestDistance = float.MaxValue;
+
+        for (int x = 0; x < gridGenerator.width; x++)
+        {
+            for (int y = 0; y < gridGenerator.height; y++)
+            {
+                GridNodeData node = gridGenerator.nodes[x, y];
+
+                if (node == null || node.isBlocked)
+                    continue;
+
+                if (!node.isTrain)
+                    continue;
+
+                float distance = Vector2Int.Distance(
+                    myNode.gridPos,
+                    node.gridPos
+                );
+
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = node;
+                }
+            }
+        }
+        trainMode = false;
+        return closest;
+        
+    }
+    public GridNodeData GetClosestPlatformNode()
+    {
+        GridNodeData myNode = GetClosestNode(transform.position);
+
+        if (myNode == null)
+            return null;
+
+        GridNodeData closest = null;
+        float closestDistance = float.MaxValue;
+
+        for (int x = 0; x < gridGenerator.width; x++)
+        {
+            for (int y = 0; y < gridGenerator.height; y++)
+            {
+                GridNodeData node = gridGenerator.nodes[x, y];
+
+                if (node == null || node.isBlocked)
+                    continue;
+
+                if (!node.isPlatform)
+                    continue;
+
+                float distance = Vector2Int.Distance(
+                    myNode.gridPos,
+                    node.gridPos
+                );
+
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = node;
+                }
+            }
+        }
+        // trainMode = false;
+        return closest;
+        
+    }
     // GridNodeData GetBestNode()
     // {
     //     GridNodeData best = null;
@@ -635,40 +881,54 @@ public class NPCPathFollower : MonoBehaviour
 
     IEnumerator FollowPath(bool initializing = false)
     {
+        float setFloat = initializing ? 6f : 3f;
+
+        if(initializing)
+        cm.initializing = true;
+        
+
         while (pathQueue.Count > 0)
         {
-            GridNodeData node =
-                pathQueue.Dequeue();
+            GridNodeData node = pathQueue.Dequeue();
+            Vector3 targetPos = node.worldPos;
 
-            Vector3 targetPos =
-                node.worldPos;
-
-            while (
-                Vector3.Distance(
-                    transform.position,
-                    targetPos
-                ) > 3f
-            )
+            while (Vector3.Distance(transform.position, targetPos) > setFloat)
             {
-                Vector3 dir = (targetPos - transform.position).normalized;
+                dir = (targetPos - transform.position).normalized;
 
-                // cm.movementSpeed = initializing ? 150 : cm.initialmovementSpeed;
+                // if(cm.gameObject != roundScript.player)
+                // {
+                    cm.movementSpeed = initializing
+                        ? 75
+                        : cm.initialmovementSpeed;
+                // }
 
-                cm.change = dir;
+                cm.change = roundScript.playersDontMove
+                    ? Vector3.zero
+                    : dir;
 
                 yield return null;
             }
 
             transform.position = targetPos;
-
             cm.change = Vector3.zero;
-            
-            // cm.movementSpeed = cm.initialmovementSpeed;
-
+            cm.movementSpeed = cm.initialmovementSpeed;
             currentNode = node;
+
+            cm.initializing = false;
+
+            // if(cm.gameObject == roundScript.player)
+            // cm.gameObject.tag = "Player";
+
+            // initializing = false;
+            // roundScript.aboutToDepart = false;
+
 
             yield return null;
         }
+
+
+
     }
 
     // =========================================================
@@ -728,15 +988,15 @@ public class NPCPathFollower : MonoBehaviour
 
         for (int i = 1; i < path.Count; i++)
         {
-            Vector2Int dir =
+            Vector2Int dirr =
                 path[i] - path[i - 1];
 
-            if (dir != prevDir)
+            if (dirr != prevDir)
             {
                 result.Add(path[i - 1]);
             }
 
-            prevDir = dir;
+            prevDir = dirr;
         }
 
         result.Add(path[path.Count - 1]);
@@ -887,6 +1147,14 @@ public class NPCPathFollower : MonoBehaviour
         {
             goCoroutine = StartCoroutine(ThinkLoop());
         }
+    }
+    public void StopThinking()
+    {
+        if (goCoroutine != null)
+        {
+            StopCoroutine(goCoroutine);
+        }
+        goCoroutine = null;
     }
 
     

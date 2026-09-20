@@ -7,6 +7,7 @@ public class ThresholdScript : MonoBehaviour
     public AreaType areaAbove;
     public AreaType areaBelow;
     public PlatformTrackTrainScript ptts;
+    public RoundScript roundScript;
     private Dictionary<GameObject, bool> aboveColliderByCharacter = new Dictionary<GameObject, bool>();
 
     public bool characterCrossingLeft = false;
@@ -218,6 +219,7 @@ public class ThresholdScript : MonoBehaviour
 
         CharacterMovement cm = other.transform.root.GetComponent<CharacterMovement>();
         GameObject character = cm.gameObject;
+        
 
         cm.currentThreshold = null;
 
@@ -227,24 +229,35 @@ public class ThresholdScript : MonoBehaviour
 
         // cm.fixedDirectionLeftDiagonal = false;
         // cm.fixedDirectionRightDiagonal = false; // un-fix the player in \/ left/right diag way upon collider exit. 
-        cm.ResetPlayerMovement(); 
+        // cm.ResetPlayerMovement(); 
+        cm.currentArea = AreaType.platform;
 
-            //ON EXIT CROSSING UP
-        if (IsCrossingUp(cm) || IsCrossingRight(cm))
-        {           
-            cm.previousArea = AreaType.train;
-            cm.currentArea = AreaType.platform;
-            // ptts.CharacterEnterArea(character);
-        }  
-        else 
-        // if (!IsCrossingUp(cm) || !IsCrossingRight(cm)) 
-        //ON EXIT CROSSING DOWN
+        if(character = roundScript.player)
         {
-           
-            cm.previousArea = AreaType.platform;
-            cm.currentArea = AreaType.train;
-            // ptts.CharacterEnterArea(character);
+            cm.ResetPlayerMovement();
+            cm.activeCollisions.Clear();
         }
+
+        // if(character = roundScript.player)
+
+
+
+        //     //ON EXIT CROSSING UP
+        // if (IsCrossingUp(cm) || IsCrossingRight(cm))
+        // {           
+        //     cm.previousArea = AreaType.train;
+        //     cm.currentArea = AreaType.platform;
+        //     // ptts.CharacterEnterArea(character);
+        // }  
+        // else 
+        // if (!IsCrossingUp(cm) || !IsCrossingRight(cm)) 
+        // //ON EXIT CROSSING DOWN
+        // {
+           
+        //     cm.previousArea = AreaType.platform;
+        //     cm.currentArea = AreaType.train;
+        //     // ptts.CharacterEnterArea(character);
+        // }
 
         aboveColliderByCharacter.Remove(other.gameObject);
     }
